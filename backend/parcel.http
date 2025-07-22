@@ -1,0 +1,60 @@
+### 1. Admin Login (Get JWT Token)
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sendit.com",
+  "password": "Admin@1234"
+}
+
+# ### Register User
+# POST http://localhost:3000/api/auth/register
+# Content-Type: application/json
+
+# {
+#   "name": "John Doe",
+#   "email": "john@example.com",
+#   "phone": "0712345678",
+#   "password": "password123",
+#   "role": "USER"
+# }
+
+
+### 📦 Create Parcel (distance is auto-calculated via Google Maps)
+POST http://localhost:3000/api/parcels
+Content-Type: application/json
+
+{
+  "senderName": "Jane",
+  "senderEmail": "jane@example.com",
+  "receiverName": "Mike",
+  "receiverEmail": "mike@example.com",
+  "from": "Nairobi, Kenya",
+  "to": "Eldoret, Kenya",
+  "type": "ENVELOPE",
+  "weight": 1.2,
+  "mode": "STANDARD",
+  "description": "Business docs"
+}
+
+
+### 🚚 Get All Parcels (admin or user)
+GET http://localhost:3000/api/parcels
+
+
+### 📦 Get One Parcel by Tracking ID
+GET http://localhost:3000/api/parcels/PKG-1001
+
+
+### 🕓 Get Status History of a Parcel
+GET http://localhost:3000/api/parcels/<PARCEL_ID>/status-history
+
+
+### ✅ Update Parcel Status (Admin only)
+PATCH http://localhost:3000/api/parcels/<PARCEL_ID>/status
+Authorization: Bearer <PASTE_ADMIN_JWT_HERE>
+Content-Type: application/json
+
+{
+  "status": "DELIVERED"
+}

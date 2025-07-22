@@ -1,0 +1,416 @@
+/* Existing theme variables */
+:root {
+  --primary-color: #800020;
+  --primary-hover: #a00028;
+  --primary-light: #b30030;
+  --primary-dark: #600018;
+  --accent-color: #c44569;
+  --secondary-color: #8e2356;
+  --tertiary-color: #d63384;
+  --text-dark: #000000;
+  --text-light: #ffffff;
+  --background-light: #ffffff;
+  --background-muted: #f8f9fa;
+  --background-card: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,249,250,0.98) 100%);
+  --text-primary: var(--text-dark);
+  --text-secondary: #6c757d;
+  --border-light: rgba(128, 0, 32, 0.3);
+  --border-active: rgba(128, 0, 32, 0.8);
+  --border-focus: var(--primary-color);
+  --shadow-subtle: 0 1px 3px 0 rgba(128, 0, 32, 0.1);
+  --shadow-medium: 0 4px 6px -1px rgba(128, 0, 32, 0.15);
+  --shadow-large: 0 10px 15px -3px rgba(128, 0, 32, 0.2);
+  --shadow-xl: 0 25px 50px -12px rgba(128, 0, 32, 0.4);
+  --shadow-container: 0 32px 64px -12px rgba(128, 0, 32, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+/* Main container with gradient background */
+body {
+  background: linear-gradient(-45deg, #800020, #8e2356, #c44569, #d63384);
+  background-size: 400% 400%;
+  animation: gradientShift 20s ease infinite;
+  min-height: 100vh;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+
+h1 {
+  margin-bottom: 3rem;
+  font-size: 2.8rem;
+  font-weight: 800;
+  text-align: left;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: slideInDown 0.8s ease;
+  position: relative;
+  display: inline-block; /* This is key */
+}
+
+h1::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: var(--primary-gradient);
+  border-radius: 2px;
+  box-shadow: 0 2px 10px var(--shadow-burgundy);
+}
+
+/* Filter Bar Styling */
+.filter-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem ; /* reduced from 2rem */
+  margin: 0.5rem auto;     /* optional: centers and adds outer space */
+  max-width: 1300px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(248,249,250,0.35) 100%);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-container);
+  animation: containerFadeIn 0.8s ease-out;
+}
+
+
+
+.filter-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-bar input,
+.filter-bar select {
+  flex: 0 0 auto;
+  min-width: 160px;
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+  font-weight: 500;
+  box-shadow: 0 2px 5px rgba(128, 0, 32, 0.06);
+  transition: all 0.2s ease;
+}
+
+.filter-bar input:focus,
+.filter-bar select:focus {
+  border-color: var(--primary-hover);
+  box-shadow: 0 0 0 3px rgba(128, 0, 32, 0.12);
+  outline: none;
+  background: #fff;
+}
+
+.filter-bar select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: rgba(255, 255, 255, 0.85);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23800020' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  padding-right: 2.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 1px solid var(--border-light);
+  border-radius: 0.5rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(128, 0, 32, 0.06);
+  transition: all 0.2s ease;
+}
+
+
+
+/* Parcel Cards Container */
+.parcel-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  padding: 2rem;
+  animation: cardsSlideIn 1s ease-out 0.2s both;
+}
+
+@keyframes cardsSlideIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Individual Card Styling */
+.card {
+  background: var(--background-card);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  padding: 2rem;
+  border-radius: 1.25rem;
+  box-shadow: var(--shadow-large);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  animation: cardFadeIn 0.6s ease-out;
+}
+
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color), var(--tertiary-color));
+  background-size: 200% 100%;
+  animation: cardBorderShimmer 4s ease infinite;
+}
+
+@keyframes cardBorderShimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--shadow-xl);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.card h3 {
+  margin: 0 0 1.5rem 0;
+  color: var(--primary-color);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.card p {
+  margin: 0.75rem 0;
+  color: var(--text-primary);
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.card strong {
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+.card select {
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--border-light);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 0.5rem;
+}
+
+.card select:hover {
+  border-color: var(--primary-color);
+  background: rgba(255, 255, 255, 1);
+}
+
+.card select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(128, 0, 32, 0.1);
+}
+
+/* Button Styling */
+button {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 50%, var(--tertiary-color) 100%);
+  background-size: 200% 200%;
+  color: var(--text-light);
+  padding: 0.875rem 1.75rem;
+  margin: 0.5rem 0.5rem 0 0;
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-medium);
+  animation: buttonGradientShift 3s ease infinite;
+}
+
+@keyframes buttonGradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.6s ease;
+}
+
+button:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-large);
+  background-size: 150% 150%;
+}
+
+button:hover::before {
+  left: 100%;
+}
+
+button:active {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: var(--shadow-medium);
+}
+
+/* Modal Styling */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: white;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background: var(--background-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 2.5rem;
+  border-radius: 1.5rem;
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: var(--shadow-container);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  animation: modalSlideIn 0.4s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from { opacity: 0; transform: scale(0.9) translateY(-20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #800020, #c44569, #d63384, #8e2356);
+  background-size: 200% 100%;
+  animation: borderShimmer 3s ease infinite;
+  border-radius: 1.5rem 1.5rem 0 0;
+}
+
+.modal-content h3 {
+  margin: 0 0 1.5rem 0;
+  color: var(--primary-color);
+  font-size: 1.75rem;
+  font-weight: 700;
+  text-align: center;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.modal-content p {
+  margin: 1rem 0;
+  color: var(--text-primary);
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.modal-content strong {
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+/* Map Container Styling */
+#google-map,
+.map-container {
+  height: 400px;
+  width: 100%;
+  margin: 1.5rem 0;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: var(--shadow-large);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  z-index: 1;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.pagination button {
+  padding: 0.5rem 1.2rem;
+  border-radius: 6px;
+  border: none;
+  background-color: var(--color-accent);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.pagination button:hover:not(:disabled) {
+  background-color: var(--color-accent-light);
+}
+
+.pagination button:disabled {
+  background-color: var(--color-muted);
+  cursor: not-allowed;
+}

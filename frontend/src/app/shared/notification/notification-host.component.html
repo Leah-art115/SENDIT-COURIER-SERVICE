@@ -1,0 +1,10 @@
+<div *ngFor="let notif of notifications">
+  <app-notification
+    [show]="true"
+    [message]="notif.message"
+    [type]="notif.type"
+    [requireAction]="notif.requireAction ?? false" 
+    (actionConfirmed)="confirm(notif.id!, $event)" 
+    (dismissed)="dismiss(notif.id!)">              
+  </app-notification>
+</div>

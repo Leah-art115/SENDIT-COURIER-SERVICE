@@ -1,0 +1,63 @@
+<div class="create-parcel-container">
+  <h2>Create New Parcel</h2>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="form-group">
+      <label>Sender Name</label>
+      <input type="text" formControlName="senderName" />
+    </div>
+    <div class="form-group">
+      <label>Sender Email</label>
+      <input type="email" formControlName="senderEmail" />
+    </div>
+    <div class="form-group">
+      <label>Receiver Name</label>
+      <input type="text" formControlName="receiverName" />
+    </div>
+    <div class="form-group">
+      <label>Receiver Email</label>
+      <input type="email" formControlName="receiverEmail" />
+    </div>
+    <div class="form-group">
+      <label>From</label>
+      <input type="text" formControlName="from" />
+    </div>
+    <div class="form-group">
+      <label>To</label>
+      <input type="text" formControlName="to" />
+    </div>
+    <div class="form-group">
+      <label>Parcel Type</label>
+      <select formControlName="type">
+        <option value="">Select type</option>
+        <option>Boxed package</option>
+        <option>Envelope</option>
+        <option>Bag</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Weight (kg)</label>
+      <input type="number" formControlName="weight" step="0.001" min="0.001"/>
+    </div>
+    <div class="form-group">
+      <label>Mode</label>
+      <select formControlName="mode">
+        <option value="">Select mode</option>
+        <option>Standard</option>
+        <option>Express</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea formControlName="description"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Tracking ID</label>
+      <input type="text" formControlName="trackingId" readonly />
+    </div>
+    <div class="form-group">
+      <label>Price (auto-calculated)</label>
+      <input type="text" formControlName="price" readonly />
+    </div>
+    <button type="submit" [disabled]="form.invalid">Create Parcel</button>
+  </form>
+</div>

@@ -1,0 +1,16 @@
+<nav class="user-navbar">
+  <div class="nav-left">
+  </div>
+
+  <div class="nav-right">
+    <a routerLink="/user/dashboard" routerLinkActive="active">Dashboard</a>
+    <a routerLink="/user/sent" routerLinkActive="active">Sent Parcels</a>
+    <a routerLink="/user/received" routerLinkActive="active">Received Parcels</a>
+    <a routerLink="/user/profile" routerLinkActive="active">
+      <i class="fas fa-user"></i>
+    </a>
+    <button (click)="logout()" title="Logout">
+      <i class="fas fa-sign-out-alt"></i>
+    </button>
+  </div>
+</nav>

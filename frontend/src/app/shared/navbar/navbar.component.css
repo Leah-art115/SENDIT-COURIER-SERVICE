@@ -1,0 +1,165 @@
+:root {
+  --primary-color: #800020;
+  --primary-hover: #a00028;
+  --text-dark: #000000;
+  --text-light: #ffffff;
+  --background-light: #ffffff;
+  --background-muted: #f8f9fa;
+}
+
+.navbar {
+  background: var(--background-light);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2rem;
+  z-index: 1000;
+  padding: 15px 0;
+}
+
+.navbar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.navbar-logo .logo {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.navbar-menu {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+}
+
+.nav-item {
+  color: var(--text-dark);
+  font-size: 1.1rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.nav-item:hover {
+  color: var(--primary-color);
+}
+
+.navbar-auth {
+  margin-left: auto; 
+  display: flex;
+  gap: 15px;
+}
+
+.auth-btn {
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.sign-in {
+  background: transparent;
+  border: 2px solid var(--primary-color);
+  color: var(--primary-color);
+}
+
+.sign-in:hover {
+  background: var(--primary-color);
+  color: var(--text-light);
+}
+
+.sign-up {
+  background: var(--primary-color);
+  border: none;
+  color: var(--text-light);
+}
+
+.sign-up:hover {
+  background: transparent;
+  color: black;
+  border: 2px solid black;
+}
+
+.mobile-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  padding: 10px;
+  z-index: 1001;
+}
+
+.bar {
+  width: 32px; /* Slightly larger for visibility */
+  height: 4px;
+  background: #800020; /* Changed to #000000 for contrast */
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.mobile-toggle:hover .bar {
+  background: #a00028; /* Hover to #800020 for lively effect */
+}
+
+.mobile-toggle.active .bar:nth-child(2) {
+  opacity: 0;
+}
+
+.mobile-toggle.active .bar:nth-child(1) {
+  transform: translateY(10px) rotate(45deg);
+}
+
+.mobile-toggle.active .bar:nth-child(3) {
+  transform: translateY(-10px) rotate(-45deg);
+}
+
+@media (max-width: 768px) {
+  .navbar-menu {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 70px;
+    left: 0;
+    width: 100%;
+    background: #f8f9fa ; /* Changed to #f8f9fa for solid background */
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+  }
+
+  .navbar-menu.active {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    text-align: center;
+  }
+
+  .navbar-auth {
+    display: flex;
+  }
+
+  .navbar-auth.mobile-auth {
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+  }
+
+  .navbar-auth.mobile-auth.active {
+    display: flex;
+  }
+
+  .mobile-toggle {
+    display: flex;
+  }
+}

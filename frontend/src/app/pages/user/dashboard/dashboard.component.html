@@ -1,0 +1,44 @@
+<app-user-navbar></app-user-navbar>
+
+<div class="dashboard-container">
+  <h2>Welcome back, {{ userName }}!</h2>
+
+  <!-- Cards -->
+  <div class="dashboard-cards">
+    <div class="card sent">
+      <h3>Total Sent</h3>
+      <p>{{ totalSent }}</p>
+    </div>
+    <div class="card received">
+      <h3>Total Received</h3>
+      <p>{{ totalReceived }}</p>
+    </div>
+    <div class="card transit">
+      <h3>In Transit</h3>
+      <p>{{ inTransit }}</p>
+    </div>
+  </div>
+
+  <!-- Recent Activity Table -->
+  <div class="recent-activities">
+    <h3>Recent Activities</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Parcel ID</th>
+          <th>Type</th>
+          <th>Date</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let activity of recentActivities">
+          <td>{{ activity.id }}</td>
+          <td>{{ activity.type }}</td>
+          <td>{{ activity.date }}</td>
+          <td>{{ activity.status }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

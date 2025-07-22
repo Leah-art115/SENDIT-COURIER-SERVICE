@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // or "mysql"/"sqlite" based on your setup
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  phone     String
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+}
+
+model Parcel {
+  id            String     @id @default(uuid())
+  trackingId    String     @unique
+  senderName    String
+  senderEmail   String
+  receiverName  String
+  receiverEmail String
+  from          String
+  to            String
+  distance      Float      // in kilometers
+  type          ParcelType
+  weight        Float      // in kilograms
+  mode          TransportMode
+  description   String?
+  price         Float
+  status        ParcelStatus @default(PENDING)
+  sentAt        DateTime   @default(now())
+  pickedAt      DateTime?
+  deliveredAt   DateTime?
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  statusHistory ParcelStatusLog[] // relation to status updates
+}
+
+model ParcelStatusLog {
+  id        String       @id @default(uuid())
+  parcelId  String
+  status    ParcelStatus
+  updatedAt DateTime     @default(now())
+
+  parcel    Parcel       @relation(fields: [parcelId], references: [id], onDelete: Cascade)
+}
+
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum ParcelType {
+  BOXED_PACKAGE
+  ENVELOPE
+  BAG
+  SUITCASE
+}
+
+enum TransportMode {
+  STANDARD
+  EXPRESS
+}
+
+enum ParcelStatus {
+  PENDING
+  PICKED_UP
+  IN_TRANSIT
+  DELIVERED
+  COMPLETED
+  CANCELLED
+}
+

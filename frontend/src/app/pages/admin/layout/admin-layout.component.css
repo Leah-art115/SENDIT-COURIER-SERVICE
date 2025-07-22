@@ -1,0 +1,5 @@
+.admin-layout-container {
+  padding: 24px;
+  background: var(--background-muted);
+  min-height: 100vh;
+}

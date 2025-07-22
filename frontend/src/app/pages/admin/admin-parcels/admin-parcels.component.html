@@ -1,0 +1,83 @@
+<h1>All Parcels</h1>
+
+<div class="filter-bar">
+  <input type="text" [(ngModel)]="filterName" placeholder="Search by sender" />
+  <input type="date" [(ngModel)]="filterDateFrom" />
+  <input type="date" [(ngModel)]="filterDateTo" />
+
+  <select [(ngModel)]="filterStatus">
+    <option value="">All Statuses</option>
+    <option>In Transit</option>
+    <option>Delivered</option>
+    <option>Picked Up</option>
+    <option>Cancelled</option>
+  </select>
+
+  <select [(ngModel)]="filterMode">
+    <option value="">All Modes</option>
+    <option>Express</option>
+    <option>Standard</option>
+  </select>
+
+  <select [(ngModel)]="filterType">
+    <option value="">All Types</option>
+    <option>Boxed Package</option>
+    <option>Envelope</option>
+    <option>Bag</option>
+    <option>Suitcase</option>
+  </select>
+</div>
+
+<div class="parcel-cards">
+  <div class="card" *ngFor="let p of          paginatedParcels">
+
+    <h3>{{ p.id }}</h3>
+    <p><strong>Sender:</strong> {{ p.sender }}</p>
+    <p><strong>Receiver:</strong> {{ p.receiver }}</p>
+    <p><strong>Status:</strong>
+      <select [value]="p.status" (change)="updateStatus(p, $event)">
+        <option>In Transit</option>
+        <option>Delivered</option>
+        <option>Picked Up</option>
+        <option>Cancelled</option>
+      </select>
+    </p>
+    <p><strong>From:</strong> {{ p.from }} → <strong>To:</strong> {{ p.to }}</p>
+    <button (click)="openMap(p)">Track</button>
+    <button (click)="openInfo(p)">View More</button>
+  </div>
+</div>
+
+<!-- MAP MODAL -->
+<div class="modal" *ngIf="showMapModal">
+  <div class="modal-content">
+    <h3>Tracking Map - {{ selectedParcel?.id }}</h3>
+    <div id="google-map" class="map-container"></div>
+    <button (click)="closeModals()">Close</button>
+  </div>
+</div>
+
+<!-- INFO MODAL -->
+<div class="modal" *ngIf="showInfoModal">
+  <div class="modal-content">
+    <h3>Parcel Details - {{ selectedParcel?.id }}</h3>
+    <p><strong>Sender:</strong> {{ selectedParcel?.sender }}</p>
+    <p><strong>Receiver:</strong> {{ selectedParcel?.receiver }}</p>
+    <p><strong>From:</strong> {{ selectedParcel?.from }} → <strong>To:</strong> {{ selectedParcel?.to }}</p>
+    <p><strong>Status:</strong> {{ selectedParcel?.status }}</p>
+    <p><strong>Type:</strong> {{ selectedParcel?.type }}</p>
+    <p><strong>Mode:</strong> {{ selectedParcel?.mode }}</p>
+    <p><strong>Weight:</strong> {{ selectedParcel?.weight }}</p>
+    <p><strong>Description:</strong> {{ selectedParcel?.description }}</p>
+    <p><strong>Date Sent:</strong> {{ selectedParcel?.dateSent }}</p>
+    <button (click)="closeModals()">Close</button>
+  </div>
+</div>
+
+<div class="pagination">
+  <button (click)="prevPage()" [disabled]="currentPage === 1">Prev</button>
+
+  <span>Page {{ currentPage }} of {{ totalPages }}</span>
+
+  <button (click)="nextPage()" [disabled]="currentPage === totalPages">Next</button>
+</div>

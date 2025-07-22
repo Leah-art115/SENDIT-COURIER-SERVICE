@@ -1,0 +1,10 @@
+<div class="notification" [ngClass]="type" *ngIf="show">
+  <button class="close-btn" (click)="dismiss()">×</button>
+  <p>{{ message }}</p>
+
+  <div class="actions" *ngIf="requireAction">
+    <button (click)="confirm('yes')">Yes</button>
+    <button (click)="confirm('no')">No</button>
+    <button (click)="confirm('cancel')">Cancel</button>
+  </div>
+</div>

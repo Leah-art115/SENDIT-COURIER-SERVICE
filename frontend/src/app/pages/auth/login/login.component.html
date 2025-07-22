@@ -1,0 +1,28 @@
+<div class="auth-container">
+  <!-- Left Side - Visual -->
+  <div class="auth-visual">
+    <div class="auth-visual-content">
+      <h1>Welcome Back</h1>
+      <p>Sign in to your account and continue your journey with us.</p>
+    </div>
+  </div>
+
+  <!-- Right Side - Form -->
+  <div class="auth-form-section">
+    <div class="auth-form-container">
+      <h2>Sign In</h2>
+      <form #loginForm="ngForm" (ngSubmit)="onLogin(loginForm)">
+        <input name="email" [(ngModel)]="credentials.email" placeholder="Email" required type="email" />
+        <input name="password" [(ngModel)]="credentials.password" placeholder="Password" required type="password" />
+        <div class="forgot">
+          <a routerLink="/auth/forgot-password">Forgot Password?</a>
+        </div>
+        <button type="submit" [disabled]="!loginForm.valid">Sign In</button>
+      </form>
+      <p class="alt-option">
+        Don't have an account?
+        <a routerLink="/auth/register">Create Account</a>
+      </p>
+    </div>
+  </div>
+</div>

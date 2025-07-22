@@ -1,0 +1,75 @@
+<app-user-navbar></app-user-navbar>
+
+<div class="profile-page">
+  <div class="profile-card">
+    <div class="profile-picture">
+  <img [src]="user.profilePicture" alt="Profile Picture" (click)="fileInput.click()" />
+  <i class="fas fa-camera" (click)="fileInput.click()"></i>
+  <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" hidden />
+</div>
+
+
+    <div class="profile-info">
+      <h2>{{ user.fullName }}</h2>
+      <p><strong>Email:</strong> {{ user.email }}</p>
+      <p><strong>Phone:</strong> {{ user.phone }}</p>
+      <p><strong>Gender:</strong> {{ user.gender }}</p>
+    </div>
+
+    <div class="profile-actions">
+      <button (click)="triggerEditProfile()">
+        <i class="fas fa-edit"></i> Edit Profile
+      </button>
+      <button (click)="triggerChangePassword()">
+        <i class="fas fa-lock"></i> Change Password
+      </button>
+    </div>
+  </div>
+
+  <!-- ✅ Edit Profile Modal -->
+  <div class="modal" *ngIf="showEditModal">
+    <div class="modal-content">
+      <h3>Edit Profile</h3>
+
+      <label>Full Name</label>
+      <input [(ngModel)]="user.fullName" />
+
+      <label>Email</label>
+      <input [(ngModel)]="user.email" />
+
+      <label>Phone</label>
+      <input [(ngModel)]="user.phone" />
+
+      <label>Gender</label>
+      <select [(ngModel)]="user.gender">
+        <option value="Female">Female</option>
+        <option value="Male">Male</option>
+        <option value="Other">Other</option>
+      </select>
+
+      <button (click)="saveProfile()">Save</button>
+      <button class="cancel" (click)="closeModals()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ✅ Change Password Modal -->
+  <div class="modal" *ngIf="showPasswordModal">
+    <div class="modal-content">
+      <h3>Change Password</h3>
+
+      <p class="info">A verification code has been sent to {{ user.email }}.</p>
+
+      <label>Email Code</label>
+      <input [(ngModel)]="emailCode" />
+
+      <label>Old Password</label>
+      <input type="password" [(ngModel)]="oldPassword" />
+
+      <label>New Password</label>
+      <input type="password" [(ngModel)]="newPassword" />
+
+      <button (click)="changePassword()">Submit</button>
+      <button class="cancel" (click)="closeModals()">Cancel</button>
+    </div>
+  </div>
+</div>

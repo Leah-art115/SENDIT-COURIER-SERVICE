@@ -1,0 +1,52 @@
+/* You can add global styles to this file, and also import other style files */
+/* You can add global styles to this file, and also import other style files */
+:root {
+  --primary-color: #800020;
+  --primary-hover: #a00028;
+  --text-dark: #000000;
+  --text-light: #ffffff;
+  --background-light: #ffffff;
+  --background-muted: #f8f9fa;
+   --primary-gradient: linear-gradient(135deg, #800020 0%, #a00028 100%);
+}
+
+:root {
+  --primary-color: #800020;
+  --primary-hover: #a00028;
+  --primary-light: #b30030;
+  --primary-dark: #600018;
+  --accent-color: #c44569;
+  --secondary-color: #8e2356;
+  --tertiary-color: #d63384;
+  --text-dark: #000000;
+  --text-light: #ffffff;
+  --background-light: #ffffff;
+  --background-muted: #f8f9fa;
+  --background-card: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(248,249,250,0.35) 100%);
+  --text-primary: var(--text-dark);
+  --text-secondary: #6c757d;
+  --border-light: rgba(128, 0, 32, 0.3);
+  --border-active: rgba(128, 0, 32, 0.8);
+  --border-focus: var(--primary-color);
+  --shadow-subtle: 0 1px 3px 0 rgba(128, 0, 32, 0.1);
+  --shadow-medium: 0 4px 6px -1px rgba(128, 0, 32, 0.15);
+  --shadow-large: 0 10px 15px -3px rgba(128, 0, 32, 0.2);
+  --shadow-xl: 0 25px 50px -12px rgba(128, 0, 32, 0.4);
+  --shadow-container: 0 32px 64px -12px rgba(128, 0, 32, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+:root {
+  --primary-color: #800020;
+  --primary-hover: #a00028;
+  --primary-gradient: linear-gradient(135deg, #800020 0%, #a00028 100%);
+  --secondary-gradient: linear-gradient(135deg, #800020 0%, #cc0033 100%);
+  --accent-gradient: linear-gradient(135deg, #a00028 0%, #d4356a 100%);
+  --text-dark: #000000;
+  --text-light: #ffffff;
+  --background-light: #ffffff;
+  --background-muted: #f8f9fa;
+  --shadow-burgundy: rgba(128, 0, 32, 0.2);
+  --shadow-light: rgba(128, 0, 32, 0.1);
+  --shadow-strong: rgba(128, 0, 32, 0.3);
+  --border-burgundy: rgba(128, 0, 32, 0.3);
+}

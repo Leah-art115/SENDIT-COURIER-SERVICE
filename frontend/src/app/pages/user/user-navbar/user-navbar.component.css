@@ -1,0 +1,45 @@
+.user-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background-color: var(--primary-color);
+  color: var(--text-light);
+  box-shadow: 0 2px 6px var(--shadow-strong);
+}
+
+.nav-left .logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.nav-right {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.nav-right a,
+.nav-right button {
+  background: none;
+  border: none;
+  color: var(--text-light);
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.nav-right a.active {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.nav-right i {
+  font-size: 1.2rem;
+}
+
+.nav-right button:hover {
+  color: var(--primary-hover);
+}

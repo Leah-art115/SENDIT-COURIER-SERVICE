@@ -1,0 +1,253 @@
+<div class="landing-page">
+  <div class="floating-elements">
+    <div class="floating-element">🚴‍♂️</div>
+    <div class="floating-element">📦</div>
+    <div class="floating-element">🏍️</div>
+    <div class="floating-element">🚗</div>
+  </div>
+
+  <!-- Hero Section -->
+  <section id="home" class="hero-section">
+    <div class="hero-content">
+      <p class="tagline">Fast, Smart and Reliable</p>
+      <h1>Smart Courier Service <br>Connecting You with Local Delivery Personnel</h1>
+      
+      <div class="tracking-container">
+        <form class="tracking-form" (ngSubmit)="trackPackage()">
+          <input 
+            type="text" 
+            class="tracking-input" 
+            placeholder="Enter Order ID" 
+            [(ngModel)]="trackingId"
+            name="trackingId"
+            required>
+          <button type="submit" class="track-btn">TRACK</button>
+        </form>
+      </div>
+      
+      <!-- <div class="service-cards">
+        <div class="service-card">
+          <div class="icon">🚚</div>
+          <h3>Fast Shipping</h3>
+          <p>Quick delivery nationwide</p>
+        </div>
+        <div class="service-card">
+          <div class="icon">✈️</div>
+          <h3>International Shipping</h3>
+          <p>Global reach, local expertise</p>
+        </div>
+        <div class="service-card">
+          <div class="icon">😊</div>
+          <h3>Satisfied Customers</h3>
+          <p>Over 10,000 happy clients</p>
+        </div>
+      </div>-->
+    </div> 
+  </section>
+
+  <!-- About Us Section -->
+  <section id="about" class="section">
+    <h2>About Us</h2>
+    <div class="about-content">
+      <div class="about-text">
+        <p>SendIT is a smart courier service platform that connects customers with local delivery personnel for efficient parcel transportation. We offer multiple transport modes with real-time tracking and automated status management.</p>
+        <p>Our mission is to provide fast, reliable delivery services by matching packages with the most suitable transport mode based on distance, weight, and delivery requirements.</p>
+        <p>We leverage smart algorithms and real-time tracking to ensure your packages reach their destination safely and on time, with full transparency throughout the delivery process.</p>
+      </div>
+     <div class="about-image">
+  <img src="/deliverytruck1.jpg" alt="Delivery truck image">
+</div>
+    </div>
+  </section>
+
+  <!-- Services Section -->
+  <section id="services" class="section">
+    <h2>Our Transport Modes</h2>
+    <div class="services-grid">
+      <div class="service-item">
+        <h3>🚴‍♂️ Bicycle Delivery</h3>
+        <p>Eco-friendly delivery for small packages within 5km. Perfect for documents, small electronics, and lightweight items up to 2kg.</p>
+      </div>
+      <div class="service-item">
+        <h3>⛸️ Roller Skates</h3>
+        <p>Ultra-fast delivery for urgent small packages within 2km. Ideal for documents and emergency deliveries in busy city areas.</p>
+      </div>
+      <div class="service-item">
+        <h3>🏍️ Motorbike</h3>
+        <p>Fast and flexible delivery for packages up to 10kg. Great balance of speed and capacity for medium-distance deliveries.</p>
+      </div>
+      <div class="service-item">
+        <h3>🚗 Small Car</h3>
+        <p>Weather-protected delivery for packages up to 25kg. Ideal for longer distances and valuable items requiring extra security.</p>
+      </div>
+      <div class="service-item">
+        <h3>🚙 Large Car/SUV</h3>
+        <p>Spacious delivery for bulky packages up to 50kg. Perfect for electronics, gifts, and items requiring extra care during transport.</p>
+      </div>
+      <div class="service-item">
+        <h3>📱 Smart Matching</h3>
+        <p>Intelligent system automatically suggests the best transport mode based on package weight, distance, and delivery urgency.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Track Section -->
+  <!-- <section id="track" class="section">
+    <h2>Track Your Package</h2>
+    <div class="tracking-container">
+      <p>Enter your tracking ID to monitor your shipment in real-time.</p>
+      <form class="tracking-form" (ngSubmit)="trackPackage()">
+        <input 
+          type="text" 
+          class="tracking-input" 
+          placeholder="Enter Tracking ID" 
+          [(ngModel)]="trackingId"
+          name="trackingId"
+          required>
+        <button type="submit" class="track-btn">TRACK</button>
+      </form>
+    </div>
+  </section> -->
+
+  <!-- FAQs Section -->
+  <section id="faqs" class="section">
+    <h2>Frequently Asked Questions</h2>
+    <div class="faqs-content">
+      <div class="faq-item">
+        <h3>How do I track my delivery?</h3>
+        <p>Enter your order ID in the tracking section to monitor your delivery in real-time. You'll see your driver's location and estimated arrival time.</p>
+      </div>
+      <div class="faq-item">
+        <h3>How are delivery prices calculated?</h3>
+        <p>Pricing depends on transport mode, distance, package weight, and delivery urgency. Our smart system shows you all available options with transparent pricing.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What transport mode should I choose?</h3>
+        <p>Our smart system automatically recommends the best transport mode based on your package weight, delivery distance, and urgency requirements.</p>
+      </div>
+      <div class="faq-item">
+        <h3>How can I contact my driver?</h3>
+        <p>Once your order is assigned, you can contact your driver directly through the app for pickup instructions or delivery updates.</p>
+      </div>
+      <div class="faq-item">
+  <h3>What is the delivery time for local deliveries?</h3>
+  <p>Delivery times vary by transport mode and distance. Roller skates: 10-15 mins, Bicycle: 15-30 mins, Motorbike: 20-40 mins, Car: 30-60 mins depending on traffic.</p>
+</div>
+
+<div class="faq-item">
+  <h3>Can I schedule a delivery for later?</h3>
+  <p>Yes, you can schedule deliveries for specific times or dates. Choose your preferred pickup time and delivery window when placing your order.</p>
+</div>
+    </div>
+  </section>
+
+  <!-- How to Use Section -->
+  <section class="section">
+    <h2>How to Use SendIT</h2>
+    <div class="steps-container">
+      <div class="step">
+        <div class="step-number">1</div>
+        <h3>Create an account</h3>
+        <p>Register and create an account with us for easier access to you packages better user experience</p>
+      </div>
+
+      <div class="step">
+        <div class="step-number">2</div>
+        <h3>Login</h3>
+        <p>Login to access your user dashboard where you can create new packages and see a record for yor old ones and watch your delivery in real time.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-number">3</div>
+        <h3>Enter Addresses</h3>
+        <p>Input your pickup and delivery locations. Our system calculates distance and suggests the best transport options.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">4</div>
+        <h3>Package Details</h3>
+        <p>Enter package weight and description. Our smart system will recommend the most suitable transport mode.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">5</div>
+        <h3>Choose Transport</h3>
+        <p>Select from available transport modes with transparent pricing and estimated delivery times.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">6</div>
+        <h3>Driver Assignment</h3>
+        <p>Get matched with an available driver. See their profile, location, and estimated arrival time.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">7</div>
+        <h3>Real-time Tracking</h3>
+        <p>Track your package from pickup to delivery with live updates and driver location.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Authentication Section -->
+  <section class="auth-section">
+    <div class="section">
+      <h2>Join SendIT Today</h2>
+      <p>Experience smart delivery with our comprehensive courier platform</p>
+      <div class="auth-buttons">
+        <button class="auth-btn sign-in" (click)="showLoginForm()">Sign In</button>
+  <button class="auth-btn sign-up" (click)="showRegisterForm()">Sign Up</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dashboard Preview -->
+  <section class="dashboard-preview">
+    <div class="section">
+      <h2>Your Dashboard Features</h2>
+      <p class="dashboard-subtitle">
+        Manage all your deliveries from one powerful dashboard
+      </p>
+      <div class="dashboard-features">
+        <div class="feature-card">
+          <!-- <div class="feature-icon"></div> Replace with font awesome icons -->
+          <h3>Order History</h3>
+          <p>View all your past and current orders with detailed delivery information and reorder options.</p>
+        </div>
+        <div class="feature-card">
+          <!-- <div class="feature-icon"></div> Replace with font awesome icons -->
+          <h3>Live Tracking</h3>
+          <p>Track multiple deliveries in real-time with driver locations and estimated arrival times.</p>
+        </div>
+        <div class="feature-card">
+          <!-- <div class="feature-icon"></div> Replace with font awesome icons -->
+          <h3>Quick Reorder</h3>
+          <p>Instantly reorder to your favorite addresses with saved package preferences and delivery instructions.</p>
+        </div>
+        <div class="feature-card">
+          <!-- <div class="feature-icon"></div> Replace with font awesome icons -->
+          <h3>Delivery Preferences</h3>
+          <p>Save your preferred transport modes, delivery instructions, and favorite addresses for faster ordering.</p>
+        </div>
+        <div class="feature-card">
+          <!-- <div class="feature-icon"></div> Replace with font awesome icons -->
+          <h3>Driver Ratings</h3>
+          <p>Rate your delivery experience and view driver profiles with ratings and reviews from other customers.</p>
+        </div>
+        <div class="feature-card">
+          <!-- <div class="feature-icon"></div> Replace with font awesome icons -->
+          <h3>Smart Notifications</h3>
+          <p>Get instant updates on order status, driver assignment, pickup confirmation, and delivery completion.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Call to Action -->
+  <section class="cta-section">
+    <div class="section">
+      <h2>Ready to Send with SendIT?</h2>
+      <p>
+        Join thousands of satisfied customers who trust SendIT for their local delivery needs
+      </p>
+      <button class="cta-btn" (click)="startShipping()">Send Package Now</button>
+      <!-- for a user with no account, a guest user who wishes to use it....they can send a package it just wont be saved in database..but what about for the driver and admin....if theres no record of thus user...how will this work-->
+    </div>
+  </section>
+</div>

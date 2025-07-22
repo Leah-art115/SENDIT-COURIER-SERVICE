@@ -1,0 +1,27 @@
+<div class="auth-container">
+  <!-- Left Side - Visual -->
+  <div class="auth-visual">
+    <div class="auth-visual-content">
+      <h1>Welcome </h1>
+      <p>Sign up to access your account and explore premium features.</p>
+    </div>
+  </div>
+
+  <!-- Right Side - Form -->
+  <div class="auth-form-section">
+    <div class="auth-form-container">
+      <h2>Create Account</h2>
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+        <input formControlName="fullName" placeholder="Full Name" />
+        <input formControlName="email" placeholder="Email" type="email" />
+        <input formControlName="phone" placeholder="Phone Number" />
+        <input formControlName="password" placeholder="Password" type="password" />
+        <button type="submit" [disabled]="registerForm.invalid">Create Account</button>
+      </form>
+      <p class="alt-option">
+        Already have an account?
+        <a routerLink="/auth/login">Sign In</a>
+      </p>
+    </div>
+  </div>
+</div>

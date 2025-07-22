@@ -1,0 +1,39 @@
+.admin-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background-color: var(--primary-color);
+  color: var(--text-light);
+  box-shadow: 0 2px 6px var(--shadow-strong);
+}
+
+.admin-navbar .nav-left {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.admin-navbar .nav-right {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.admin-navbar a {
+  color: var(--text-light);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.admin-navbar a.active {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.admin-navbar button {
+  background: transparent;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 18px;
+}

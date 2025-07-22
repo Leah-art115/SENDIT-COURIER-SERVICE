@@ -1,0 +1,18 @@
+<nav class="admin-navbar">
+  <div class="nav-left">
+    <strong>SendIT Admin</strong>
+  </div>
+
+  <div class="nav-right">
+    <a routerLink="/admin/dashboard" routerLinkActive="active">Dashboard</a>
+
+    <a routerLink="/admin/create-parcel" routerLinkActive="active">Create Parcel</a>
+
+    <a routerLink="/admin/parcels" routerLinkActive="active">Parcels</a>
+    
+    <a routerLink="/admin/users" routerLinkActive="active">Users</a>
+    <button (click)="logout()" title="Logout">
+      <i class="fas fa-sign-out-alt"></i>
+    </button>
+  </div>
+</nav>

@@ -1,0 +1,32 @@
+<div class="navbar">
+  <div class="navbar-container">
+    <!-- Logo -->
+    <div class="navbar-logo">
+      <a href="#" class="logo">SENDIT</a>
+    </div>
+
+    <!-- Navigation Items -->
+    <div class="navbar-menu" [ngClass]="{'active': isMenuOpen}">
+      <a class="nav-item" (click)="scrollToSection('home')">Home</a>
+      <a class="nav-item" (click)="scrollToSection('about')">About</a>
+      <a class="nav-item" (click)="scrollToSection('services')">Services</a>
+      <a class="nav-item" (click)="scrollToSection('track')">Track</a>
+      <a class="nav-item" (click)="scrollToSection('faqs')">FAQs</a>
+
+      
+       <div class="navbar-auth mobile-auth" [ngClass]="{'active': isMenuOpen}" *ngIf="!hideAuthButtons()">
+  <button class="auth-btn sign-in" (click)="showLoginForm()">Sign In</button>
+  <button class="auth-btn sign-up" (click)="showRegisterForm()">Sign Up</button>
+</div>
+
+
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <div class="mobile-toggle" [ngClass]="{'active': isMenuOpen}" (click)="toggleMenu()">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </div>
+  </div>
+</div>

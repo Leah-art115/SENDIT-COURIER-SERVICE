@@ -14,16 +14,10 @@ export class ParcelService {
   constructor(private prisma: PrismaService) {}
 
   async createParcel(dto: CreateParcelDto) {
-    // 1. Generate tracking ID
     const trackingId = await generateUniqueTrackingId(this.prisma);
-
-    // 2. Calculate distance using Google Maps
     const distance = await this.getDistanceInKm(dto.from, dto.to);
-
-    // 3. Calculate price
     const price = calculateParcelPrice(dto.type, dto.weight, distance, dto.mode);
 
-    // 4. Save parcel
     const parcel = await this.prisma.parcel.create({
       data: {
         trackingId,
@@ -43,7 +37,6 @@ export class ParcelService {
       },
     });
 
-    // 5. Log initial status
     await this.prisma.parcelStatusLog.create({
       data: {
         parcelId: parcel.id,
@@ -69,7 +62,7 @@ export class ParcelService {
         data.rows[0].elements[0].distance
       ) {
         const meters = data.rows[0].elements[0].distance.value;
-        return Math.round(meters / 1000); // Convert to kilometers
+        return Math.round(meters / 1000);
       } else {
         throw new Error('No valid distance returned');
       }
@@ -84,6 +77,7 @@ export class ParcelService {
       orderBy: { sentAt: 'desc' },
       include: {
         statusHistory: true,
+        driver: true,
       },
     });
   }
@@ -91,14 +85,14 @@ export class ParcelService {
   async getParcelById(id: string) {
     return this.prisma.parcel.findUnique({
       where: { id },
-      include: { statusHistory: true },
+      include: { statusHistory: true, driver: true },
     });
   }
 
   async getParcelByTrackingId(trackingId: string) {
     return this.prisma.parcel.findUnique({
       where: { trackingId },
-      include: { statusHistory: true },
+      include: { statusHistory: true, driver: true },
     });
   }
 
@@ -109,14 +103,27 @@ export class ParcelService {
     });
   }
 
-  async updateParcelStatus(parcelId: string, newStatus: ParcelStatus) {
+  async updateParcelStatus(parcelId: string, newStatus: ParcelStatus, driverId: number) {
     const now = new Date();
 
-    const parcel = await this.prisma.parcel.update({
+    const parcel = await this.prisma.parcel.findUnique({
+      where: { id: parcelId },
+    });
+
+    if (!parcel) {
+      throw new Error('Parcel not found');
+    }
+
+    if (parcel.driverId !== driverId) {
+      throw new Error('You are not assigned to this parcel');
+    }
+
+    const updatedParcel = await this.prisma.parcel.update({
       where: { id: parcelId },
       data: {
         status: newStatus,
-        pickedAt: newStatus === ParcelStatus.PICKED_UP ? now : undefined,
+        pickedAt: newStatus === ParcelStatus.PICKED_UP_BY_DRIVER ? now : undefined,
+
         deliveredAt: newStatus === ParcelStatus.DELIVERED ? now : undefined,
       },
     });
@@ -129,6 +136,21 @@ export class ParcelService {
       },
     });
 
-    return parcel;
+    return updatedParcel;
+  }
+
+  async assignDriver(parcelId: string, driverId: number) {
+    const parcel = await this.prisma.parcel.findUnique({ where: { id: parcelId } });
+
+    if (!parcel) {
+      throw new Error('Parcel not found');
+    }
+
+    return this.prisma.parcel.update({
+      where: { id: parcelId },
+      data: {
+        driverId,
+      },
+    });
   }
 }

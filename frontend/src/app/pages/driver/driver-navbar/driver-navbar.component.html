@@ -1,0 +1,16 @@
+<nav class="driver-navbar">
+  <div class="nav-left">
+    <strong>SendIT Driver</strong>
+  </div>
+
+  <div class="nav-right">
+    <a routerLink="/driver/dashboard" routerLinkActive="active">Dashboard</a>
+    <a routerLink="/driver/parcels" routerLinkActive="active">Parcels</a>
+    <a routerLink="/driver/history" routerLinkActive="active">History</a>
+    <a routerLink="/driver/profile" routerLinkActive="active">Profile</a>
+
+    <button (click)="logout()" title="Logout">
+      <i class="fas fa-sign-out-alt"></i>
+    </button>
+  </div>
+</nav>

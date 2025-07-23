@@ -20,12 +20,17 @@
 }
 
 .navbar-container {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
+  width: 100%;
+  padding: 0 10px; /* Small padding to push logo to near edge */
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
+}
+
+.navbar-logo {
+  justify-self: start;
 }
 
 .navbar-logo .logo {
@@ -40,6 +45,7 @@
   display: flex;
   gap: 30px;
   align-items: center;
+  justify-content: center;
 }
 
 .nav-item {
@@ -55,9 +61,10 @@
 }
 
 .navbar-auth {
-  margin-left: auto; 
+  justify-self: end;
   display: flex;
   gap: 15px;
+  align-items: center;
 }
 
 .auth-btn {
@@ -101,15 +108,46 @@
 }
 
 .bar {
-  width: 32px; /* Slightly larger for visibility */
+  width: 32px;
   height: 4px;
-  background: #800020; /* Changed to #000000 for contrast */
+  background: #800020;
   border-radius: 2px;
   transition: all 0.3s ease;
 }
 
+.user-info-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.user-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--primary-color);
+}
+
+.user-icon {
+  font-size: 1.2rem;
+  color: var(--primary-color);
+}
+
+.logout-btn {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-weight: bold;
+  transition: color 0.2s ease;
+}
+
+.logout-btn:hover {
+  color: var(--primary-hover);
+}
+
 .mobile-toggle:hover .bar {
-  background: #a00028; /* Hover to #800020 for lively effect */
+  background: #a00028;
 }
 
 .mobile-toggle.active .bar:nth-child(2) {
@@ -122,44 +160,4 @@
 
 .mobile-toggle.active .bar:nth-child(3) {
   transform: translateY(-10px) rotate(-45deg);
-}
-
-@media (max-width: 768px) {
-  .navbar-menu {
-    display: none;
-    flex-direction: column;
-    position: absolute;
-    top: 70px;
-    left: 0;
-    width: 100%;
-    background: #f8f9fa ; /* Changed to #f8f9fa for solid background */
-    padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-  }
-
-  .navbar-menu.active {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-    text-align: center;
-  }
-
-  .navbar-auth {
-    display: flex;
-  }
-
-  .navbar-auth.mobile-auth {
-    flex-direction: column;
-    gap: 15px;
-    margin-top: 20px;
-  }
-
-  .navbar-auth.mobile-auth.active {
-    display: flex;
-  }
-
-  .mobile-toggle {
-    display: flex;
-  }
 }

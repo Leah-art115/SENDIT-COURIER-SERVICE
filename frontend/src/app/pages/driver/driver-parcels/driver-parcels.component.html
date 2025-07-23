@@ -1,0 +1,85 @@
+<app-driver-navbar></app-driver-navbar>
+
+<div class="container">
+
+  <h2>Driver Parcels</h2>
+
+  <!-- Optional filter bar here if needed -->
+   <div class="filter-bar">
+  <input type="text" [(ngModel)]="filterName" placeholder="Search by name" />
+  <input type="date" [(ngModel)]="filterFromDate" />
+  <input type="date" [(ngModel)]="filterToDate" />
+
+  <select [(ngModel)]="filterStatus">
+    <option value="">All Statuses</option>
+    <option>Delivered</option>
+    <option>Cancelled</option>
+  </select>
+
+  <select [(ngModel)]="filterType">
+    <option value="">All Types</option>
+    <option>Box</option>
+    <option>Envelope</option>
+  </select>
+
+  <select [(ngModel)]="filterMode">
+    <option value="">All Modes</option>
+    <option>Express</option>
+    <option>Standard</option>
+  </select>
+</div>
+
+
+  <div class="parcel-cards">
+    <div class="card" *ngFor="let parcel of filteredParcels">
+      <h3>{{ parcel.trackingId }}</h3>
+      <p><strong>Sender:</strong> {{ parcel.sender }}</p>
+      <p><strong>Receiver:</strong> {{ parcel.receiver }}</p>
+      <p><strong>From:</strong> {{ parcel.from }} → <strong>To:</strong> {{ parcel.to }}</p>
+      <p><strong>Date Sent:</strong> {{ parcel.dateSent }}</p>
+      <p><strong>Status:</strong> {{ parcel.status }}</p>
+
+      <!-- Status update UI inside each card -->
+      <div class="status-update">
+        <label for="status-{{ parcel.trackingId }}">Update Status:</label>
+        <select id="status-{{ parcel.trackingId }}" [(ngModel)]="parcel.status">
+          <option>Pending</option>
+          <option>Picked Up</option>
+          <option>In Transit</option>
+          <option>Delivered</option>
+        </select>
+        <!-- <button (click)="updateStatus(parcel.status)">Confirm Update</button>
+      </div> -->
+
+      <!-- <button (click)="openMap(parcel)">Track</button> -->
+      <button (click)="openInfo(parcel)">View More Info</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- MAP MODAL -->
+<div class="modal" *ngIf="showMapModal && selectedParcel">
+  <div class="modal-content">
+    <h3>Tracking Map - {{ selectedParcel.trackingId }}</h3>
+    <div id="google-map" style="height: 400px;"></div>
+    <button (click)="closeModals()">Close</button>
+  </div>
+</div>
+
+<!-- INFO MODAL -->
+<div class="modal" *ngIf="showInfoModal && selectedParcel">
+  <div class="modal-content">
+    <h3>Parcel Details - {{ selectedParcel.trackingId }}</h3>
+    <p><strong>Sender:</strong> {{ selectedParcel.sender }}</p>
+    <p><strong>From:</strong> {{ selectedParcel.from }} → <strong>To:</strong> {{ selectedParcel.to }}</p>
+    <p><strong>Status:</strong> {{ selectedParcel.status }}</p>
+    <p><strong>Description:</strong> {{ selectedParcel.description }}</p>
+    <p><strong>Type:</strong> {{ selectedParcel.type }}</p>
+    <p><strong>Weight:</strong> {{ selectedParcel.weight }}</p>
+    <p><strong>Payment Method:</strong> {{ selectedParcel.paymentMethod }}</p>
+    <p><strong>Delivery Mode:</strong> {{ selectedParcel.deliveryMode }}</p>
+    <p><strong>Expected Delivery:</strong> {{ selectedParcel.expectedDelivery }}</p>
+    <button (click)="closeModals()">Close</button>
+  </div>
+</div>

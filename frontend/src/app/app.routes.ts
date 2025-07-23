@@ -41,5 +41,11 @@ export const routes: Routes = [
       import('./pages/admin/layout/admin-layout.component').then(m => m.AdminLayoutComponent),
     canActivate: [AuthGuard],
     children: adminRoutes
-  }
+  },
+  {
+  path: 'driver',
+  loadChildren: () =>
+    import('./pages/driver/driver.routes').then(m => m.driverRoutes)
+}
+
 ];

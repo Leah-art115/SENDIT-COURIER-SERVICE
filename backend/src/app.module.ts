@@ -5,6 +5,8 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ParcelModule } from './parcel/parcel.module';
+import { AdminModule } from './admin/admin.module';
+import { DriverModule } from './driver/driver.module';
 
 @Module({
   imports: [
@@ -12,6 +14,8 @@ import { ParcelModule } from './parcel/parcel.module';
     AuthModule,
     PrismaModule,
     ParcelModule,
+    AdminModule,
+    DriverModule,
   ],
   controllers: [AppController],
   providers: [AppService],

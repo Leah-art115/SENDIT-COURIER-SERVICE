@@ -1,0 +1,48 @@
+<app-driver-navbar></app-driver-navbar>
+
+<h1>Welcome, {{ firstName }}</h1>
+
+<div class="stats-cards">
+  <div class="card total">
+    <h3>Total Deliveries</h3>
+    <p>{{ totalDeliveries }}</p>
+  </div>
+
+  <div class="card in-transit">
+    <h3>In Transit</h3>
+    <p>{{ inTransit }}</p>
+  </div>
+
+  <div class="card completed">
+    <h3>Completed</h3>
+    <p>{{ completed }}</p>
+  </div>
+</div>
+
+<div class="recent-section">
+  <h2>Recent Deliveries</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Tracking ID</th>
+        <th>Recipient</th>
+        <th>Status</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let delivery of recentDeliveries; let i = index">
+        <td>{{ i + 1 }}</td>
+        <td>{{ delivery.trackingId }}</td>
+        <td>{{ delivery.recipient }}</td>
+        <td>
+          <span class="status" [ngClass]="delivery.status.toLowerCase().replace(' ', '-')">
+            {{ delivery.status }}
+          </span>
+        </td>
+        <td>{{ delivery.date }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

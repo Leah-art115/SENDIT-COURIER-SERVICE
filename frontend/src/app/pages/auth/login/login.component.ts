@@ -24,14 +24,22 @@ export class LoginComponent {
     password: ''
   };
 
-  onLogin(form: NgForm) {
+  onLogin(form: NgForm): void {
     if (form.valid) {
-      if (this.authService.login(this.credentials.email, this.credentials.password)) {
-        this.notify.success('Logged in successfully ✅');
-        this.router.navigate(['/dashboard']);
-      } else {
-        this.notify.error('Invalid credentials');
-      }
+      this.authService.login(this.credentials.email, this.credentials.password).subscribe({
+        next: (success) => {
+          if (success) {
+            this.notify.success('Logged in successfully ✅');
+            // Let AuthService handle navigation completely
+          } else {
+            this.notify.error('Invalid credentials');
+          }
+        },
+        error: (error) => {
+          console.error('Login error:', error);
+          this.notify.error('Login failed. Please try again.');
+        }
+      });
     }
   }
 }

@@ -1,59 +1,573 @@
-.dashboard-container {
-  padding: 2rem;
-  background-color: var(--background-muted);
+/* Global Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  color: var(--text-primary);
+  line-height: 1.6;
   min-height: 100vh;
 }
 
-h2 {
-  color: var(--primary-color);
-  margin-bottom: 1.5rem;
+/* Dashboard Container */
+.dashboard-container {
+  /* max-width: 1200px; */
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  animation: fadeInUp 0.8s ease-out;
 }
 
+/* Welcome Header */
+.dashboard-container h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+  animation: slideInFromTop 1s ease-out;
+  margin-bottom: 60px;
+}
+
+.dashboard-container h2::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 15%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: var(--primary-gradient);
+  border-radius: 2px;
+  animation: expandWidth 1.2s ease-out 0.5s both;
+}
+
+/* Dashboard Cards Grid */
 .dashboard-cards {
-  display: flex;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+  animation: fadeInUp 0.8s ease-out 0.3s both;
 }
 
+/* Individual Card Styles */
 .card {
-  background-color: var(--background-light);
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  flex: 1;
-  text-align: center;
+  background: var(--background-card);
+  border-radius: 24px;
+  padding: 2.5rem 2rem;
+  box-shadow: var(--shadow-container);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(15px);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  transform-origin: center;
 }
 
+/* Card Shimmer Effect */
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.7s ease;
+  z-index: 1;
+}
+
+.card:hover::before {
+  left: 100%;
+}
+
+/* Card Floating Animation */
+.card:hover {
+  transform: translateY(-12px) scale(1.03);
+  box-shadow: var(--shadow-xl), 0 0 30px rgba(128, 0, 32, 0.2);
+  border-color: var(--border-active);
+}
+
+/* Card Content */
 .card h3 {
-  margin-bottom: 0.5rem;
-  color: var(--text-dark);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
 }
 
 .card p {
+  font-size: 3rem;
+  font-weight: 800;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transition: all 0.4s ease;
+  position: relative;
+  z-index: 2;
+  text-shadow: 0 2px 4px rgba(128, 0, 32, 0.1);
+}
+
+/* Card Specific Styles */
+.card.sent {
+  background: linear-gradient(135deg, rgba(128, 0, 32, 0.08) 0%, rgba(160, 0, 40, 0.12) 100%);
+  border-left: 5px solid var(--primary-color);
+}
+
+.card.sent:hover {
+  box-shadow: 0 25px 50px rgba(128, 0, 32, 0.25), var(--shadow-xl);
+  background: linear-gradient(135deg, rgba(128, 0, 32, 0.12) 0%, rgba(160, 0, 40, 0.18) 100%);
+}
+
+.card.received {
+  background: linear-gradient(135deg, rgba(196, 69, 105, 0.08) 0%, rgba(142, 35, 86, 0.12) 100%);
+  border-left: 5px solid var(--accent-color);
+}
+
+.card.received:hover {
+  box-shadow: 0 25px 50px rgba(196, 69, 105, 0.25), var(--shadow-xl);
+  background: linear-gradient(135deg, rgba(196, 69, 105, 0.12) 0%, rgba(142, 35, 86, 0.18) 100%);
+}
+
+.card.transit {
+  background: linear-gradient(135deg, rgba(214, 51, 132, 0.08) 0%, rgba(128, 0, 32, 0.12) 100%);
+  border-left: 5px solid var(--tertiary-color);
+}
+
+.card.transit:hover {
+  box-shadow: 0 25px 50px rgba(214, 51, 132, 0.25), var(--shadow-xl);
+  background: linear-gradient(135deg, rgba(214, 51, 132, 0.12) 0%, rgba(128, 0, 32, 0.18) 100%);
+}
+
+/* Recent Activities Section */
+.recent-activities {
+  animation: fadeInUp 0.8s ease-out 0.6s both;
+}
+
+.recent-activities h3 {
   font-size: 1.8rem;
-  font-weight: bold;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2rem;
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.recent-activities h3::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 5px;
+  height: 100%;
+  background: var(--primary-gradient);
+  border-radius: 3px;
+  animation: slideInFromLeft 0.8s ease-out 0.8s both;
+}
+
+/* Table Styles */
+table {
+  width: 100%;
+  background: var(--background-card);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: var(--shadow-container);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  position: relative;
+}
+
+/* Table Header */
+thead {
+  background: var(--primary-gradient);
+  position: relative;
+}
+
+thead::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+}
+
+thead th {
+  padding: 1.8rem 1.5rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-light);
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+thead th:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Table Body */
+tbody tr {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(128, 0, 32, 0.1);
+}
+
+tbody tr:hover {
+  background: linear-gradient(135deg, rgba(128, 0, 32, 0.06) 0%, rgba(160, 0, 40, 0.1) 100%);
+  transform: scale(1.008);
+  box-shadow: inset 0 0 20px rgba(128, 0, 32, 0.05);
+}
+
+
+tbody tr:hover::before {
+  left: 100%;
+}
+
+tbody td {
+  padding: 1.5rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
+  font-size: 0.95rem;
+}
+
+tbody tr:last-child {
+  border-bottom: none;
+}
+
+/* Status Styling */
+tbody td:last-child {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Status Badge Styles */
+.status {
+  padding: 0.6rem 1.2rem;
+  border-radius: 25px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-subtle);
+}
+
+.status::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.4s ease;
+}
+
+.status:hover::before {
+  left: 100%;
+}
+
+.status:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-medium);
+}
+
+/* Status Color Variants */
+.status.delivered,
+.status.completed {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.status.delivered:hover,
+.status.completed:hover {
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+.status.in-transit,
+.status.transit,
+.status.shipping {
+  background: var(--accent-gradient);
+  color: white;
+  box-shadow: 0 4px 15px var(--shadow-burgundy);
+}
+
+.status.in-transit:hover,
+.status.transit:hover,
+.status.shipping:hover {
+  box-shadow: 0 6px 20px var(--shadow-strong);
+}
+
+.status.pending,
+.status.processing {
+  background: linear-gradient(135deg, #ffc107, #fd7e14);
+  color: white;
+  box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+}
+
+.status.pending:hover,
+.status.processing:hover {
+  box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
+}
+
+.status.cancelled,
+.status.failed {
+  background: linear-gradient(135deg, #dc3545, #e74c3c);
+  color: white;
+  box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+}
+
+.status.cancelled:hover,
+.status.failed:hover {
+  box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+}
+
+.status.received {
+  background: var(--secondary-gradient);
+  color: white;
+  box-shadow: 0 4px 15px rgba(128, 0, 32, 0.3);
+}
+
+.status.received:hover {
+  box-shadow: 0 6px 20px rgba(128, 0, 32, 0.4);
+}
+
+.status.sent {
+  background: linear-gradient(135deg, #6f42c1, #8e2de2);
+  color: white;
+  box-shadow: 0 4px 15px rgba(111, 66, 193, 0.3);
+}
+
+.status.sent:hover {
+  box-shadow: 0 6px 20px rgba(111, 66, 193, 0.4);
+}
+
+/* Parcel ID Styling */
+tbody td:first-child {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
   color: var(--primary-color);
 }
 
-.recent-activities table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: var(--background-light);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+/* Hover Effects for Interactive Elements */
+.card:hover h3 {
+  color: var(--primary-color);
+  transform: translateY(-2px);
 }
 
-.recent-activities th,
-.recent-activities td {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #ccc;
-  text-align: left;
+.card:hover p {
+  animation: numberPulse 0.8s ease-in-out;
+  transform: scale(1.05);
 }
 
-.recent-activities th {
-  background-color: var(--color-muted);
-  color: var(--text-dark);
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.recent-activities td {
-  color: var(--text-dark);
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes expandWidth {
+  from {
+    width: 0;
+  }
+  to {
+    width: 80px;
+  }
+}
+
+@keyframes numberPulse {
+  0%, 100% {
+    transform: scale(1.05);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes cardFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Staggered card animations */
+.card:nth-child(1) {
+  animation: fadeInUp 0.8s ease-out 0.1s both;
+}
+
+.card:nth-child(2) {
+  animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+.card:nth-child(3) {
+  animation: fadeInUp 0.8s ease-out 0.3s both;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1.5rem 1rem;
+  }
+
+  .dashboard-container h2 {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .dashboard-cards {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .card {
+    padding: 2rem 1.5rem;
+  }
+
+  .card p {
+    font-size: 2.5rem;
+  }
+
+  table {
+    font-size: 0.9rem;
+  }
+
+  thead th,
+  tbody td {
+    padding: 1.2rem 1rem;
+  }
+
+  .recent-activities h3 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-container h2 {
+    font-size: 1.8rem;
+  }
+
+  .dashboard-cards {
+    gap: 1rem;
+  }
+
+  .card {
+    padding: 1.5rem 1.25rem;
+    border-radius: 16px;
+  }
+
+  .card p {
+    font-size: 2rem;
+  }
+
+  table {
+    font-size: 0.85rem;
+  }
+
+  thead th,
+  tbody td {
+    padding: 1rem 0.75rem;
+  }
+
+  .recent-activities h3 {
+    font-size: 1.3rem;
+    padding-left: 1rem;
+  }
+}
+
+/* Additional Polish */
+.card, table, tbody tr {
+  will-change: transform;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection styling */
+::selection {
+  background: var(--primary-color);
+  color: var(--text-light);
+}
+
+/* Focus styles for accessibility */
+.card:focus,
+tbody tr:focus,
+thead th:focus {
+  outline: 3px solid var(--border-focus);
+  outline-offset: 3px;
+}
+
+/* Loading animation for dynamic content */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.loading {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 37%, #f0f0f0 63%);
+  background-size: 400px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
 }

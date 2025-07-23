@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql" // or "mysql"/"sqlite" based on your setup
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -18,29 +18,34 @@ model User {
 }
 
 model Parcel {
-  id            String     @id @default(uuid())
-  trackingId    String     @unique
-  senderName    String
-  senderEmail   String
-  receiverName  String
-  receiverEmail String
-  from          String
-  to            String
-  distance      Float      // in kilometers
-  type          ParcelType
-  weight        Float      // in kilograms
-  mode          TransportMode
-  description   String?
-  price         Float
-  status        ParcelStatus @default(PENDING)
-  sentAt        DateTime   @default(now())
-  pickedAt      DateTime?
-  deliveredAt   DateTime?
+  id             String        @id @default(uuid())
+  trackingId     String        @unique
+  senderName     String
+  senderEmail    String
+  receiverName   String
+  receiverEmail  String
+  from           String
+  to             String
+  distance       Float
+  destinationLat Float? // ✅ Latitude of destination
+  destinationLng Float? // ✅ Longitude of destination
+  type           ParcelType
+  weight         Float
+  mode           TransportMode
+  description    String?
+  price          Float
+  status         ParcelStatus  @default(PENDING)
+  sentAt         DateTime      @default(now())
+  pickedAt       DateTime?
+  deliveredAt    DateTime?
 
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  driverId Int?
+  driver   Driver? @relation(fields: [driverId], references: [id])
 
-  statusHistory ParcelStatusLog[] // relation to status updates
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  statusHistory ParcelStatusLog[]
 }
 
 model ParcelStatusLog {
@@ -49,13 +54,30 @@ model ParcelStatusLog {
   status    ParcelStatus
   updatedAt DateTime     @default(now())
 
-  parcel    Parcel       @relation(fields: [parcelId], references: [id], onDelete: Cascade)
+  parcel Parcel @relation(fields: [parcelId], references: [id], onDelete: Cascade)
 }
 
+model Driver {
+  id                    Int          @id @default(autoincrement())
+  name                  String
+  email                 String       @unique
+  password              String
+  mode                  CourierMode
+  status                DriverStatus @default(AVAILABLE)
+  canReceiveAssignments Boolean      @default(true)
+  currentLat            Float? // ✅ Latest driver latitude
+  currentLng            Float? // ✅ Latest driver longitude
+  deletedAt             DateTime?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  parcels Parcel[] // reverse relation
+}
 
 enum Role {
   ADMIN
   USER
+  DRIVER
 }
 
 enum ParcelType {
@@ -72,10 +94,25 @@ enum TransportMode {
 
 enum ParcelStatus {
   PENDING
-  PICKED_UP
-  IN_TRANSIT
-  DELIVERED
-  COMPLETED
+  ASSIGNED // ✅ When admin assigns to driver
+  PICKED_UP_BY_DRIVER // ✅ Manually marked by driver
+  IN_TRANSIT // ✅ Based on driver’s live location
+  DELIVERED // ✅ When driver reaches destination
+  COLLECTED_BY_RECEIVER // ✅ Manually marked by user
   CANCELLED
 }
 
+enum CourierMode {
+  BICYCLE
+  SKATES
+  MOTORCYCLE
+  CAR
+}
+
+enum DriverStatus {
+  AVAILABLE
+  ON_DELIVERY
+  OUT_SICK
+  ON_LEAVE
+  SUSPENDED
+}

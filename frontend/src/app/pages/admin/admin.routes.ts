@@ -27,6 +27,11 @@ export const adminRoutes: Routes = [
           import('./admin-create-parcel/admin-create-parcel.component').then(m => m.AdminCreateParcelComponent),
       },
       {
+        path: 'drivers', 
+        loadComponent: () =>
+          import('./admin-drivers/admin-drivers.component').then(m => m.AdminDriversComponent),
+      },
+      {
         path: '',
         pathMatch: 'full',
         redirectTo: 'dashboard'

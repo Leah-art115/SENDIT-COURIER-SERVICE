@@ -12,14 +12,23 @@
       <a class="nav-item" (click)="scrollToSection('services')">Services</a>
       <a class="nav-item" (click)="scrollToSection('track')">Track</a>
       <a class="nav-item" (click)="scrollToSection('faqs')">FAQs</a>
+    </div>
 
-      
-       <div class="navbar-auth mobile-auth" [ngClass]="{'active': isMenuOpen}" *ngIf="!hideAuthButtons()">
-  <button class="auth-btn sign-in" (click)="showLoginForm()">Sign In</button>
-  <button class="auth-btn sign-up" (click)="showRegisterForm()">Sign Up</button>
-</div>
+    <!-- Auth Buttons OR User Info -->
+    <div class="navbar-auth" [ngClass]="{'mobile-auth': isMenuOpen}">
+      <ng-container *ngIf="!authService.isAuthenticated(); else loggedInBlock">
+        <button class="auth-btn sign-in" (click)="showLoginForm()">Sign In</button>
+        <button class="auth-btn sign-up" (click)="showRegisterForm()">Sign Up</button>
+      </ng-container>
 
-
+      <ng-template #loggedInBlock>
+        <div class="user-info-wrapper">
+          <div class="user-info" (click)="goToDashboard()">
+            <i class="fas fa-user user-icon"></i>
+            <span>{{ authService.getUserFirstName() || authService.getUserInitials() }}</span>
+          </div>
+        </div>
+      </ng-template>
     </div>
 
     <!-- Mobile Menu Toggle -->

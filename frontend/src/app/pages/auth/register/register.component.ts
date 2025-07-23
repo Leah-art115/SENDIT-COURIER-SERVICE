@@ -42,17 +42,28 @@ export class RegisterComponent {
     });
   }
 
-  onSubmit(): void {
-    if (this.registerForm.valid) {
-      const formData = this.registerForm.getRawValue();
-      const success = this.authService.register(formData);
+ onSubmit(): void {
+  if (this.registerForm.valid) {
+    const formData = this.registerForm.getRawValue();
 
+    this.authService.register({
+      name: formData.fullName,
+      email: formData.email,
+      phone: formData.phone,
+      password: formData.password
+    }).subscribe(success => {
       if (success) {
-        this.notifications.success('Registered successfully!');
-        this.router.navigate(['/dashboard']);
+        this.notifications.success('Registered successfully! Please log in.');
+        setTimeout(() => {
+          this.router.navigate(['/auth/login']);
+        }, 1000);
       } else {
         this.notifications.error('Registration failed. Please try again.');
       }
-    }
+    });
   }
+}
+
+
+
 }

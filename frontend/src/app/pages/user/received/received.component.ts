@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { UserNavbarComponent } from '../user-navbar/user-navbar.component';
 import { environment } from '../../../../environments/environment';
 
+// Declare google as a global variable for TypeScript
+declare const google: any;
+
 interface Parcel {
   trackingId: string;
   sender: string;
@@ -23,7 +26,7 @@ interface Parcel {
   };
 }
 
-declare const google: any;
+/// <reference types="google.maps" />
 
 @Component({
   selector: 'app-received',
@@ -96,13 +99,30 @@ export class ReceivedComponent implements AfterViewInit {
   }
 
   loadGoogleMapsScript(): void {
-    if (this.mapInitialized) return;
+    if (
+      this.mapInitialized ||
+      (window as Window & typeof globalThis & { google?: any }).google?.maps
+    ) {
+      this.mapInitialized = true;
+      return;
+    }
 
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}`;
+    // Use the modern loading approach with callback and libraries
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}&loading=async&libraries=marker&callback=initGoogleMaps`;
     script.async = true;
     script.defer = true;
-    script.onload = () => (this.mapInitialized = true);
+    
+    // Create a global callback function
+    (window as Window & typeof globalThis & { initGoogleMaps: () => void }).initGoogleMaps = () => {
+      this.mapInitialized = true;
+      console.log('Google Maps loaded successfully');
+    };
+
+    script.onerror = () => {
+      console.error('Failed to load Google Maps script');
+    };
+
     document.head.appendChild(script);
   }
 
@@ -116,55 +136,144 @@ export class ReceivedComponent implements AfterViewInit {
     }, 300);
   }
 
-  renderGoogleMap(parcel: Parcel): void {
-  const destinationCoords = this.getLatLng(parcel.to);
+  async renderGoogleMap(parcel: Parcel): Promise<void> {
+    try {
+      const destinationCoords = this.getLatLng(parcel.to);
 
-  const map = new google.maps.Map(document.getElementById('google-map'), {
-    center: parcel.currentLocation,
-    zoom: 7
-  });
+      // Import the AdvancedMarkerElement library
+      const { AdvancedMarkerElement, PinElement } = await (window as any).google.maps.importLibrary("marker");
 
-  // Current location marker (green)
-  new google.maps.Marker({
-    position: parcel.currentLocation,
-    map,
-    title: 'Current Location',
-    icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png'
-  });
+      const map = new google.maps.Map(document.getElementById('google-map'), {
+        center: parcel.currentLocation,
+        zoom: 7,
+        mapId: 'DEMO_MAP_ID' // Required for AdvancedMarkerElement
+      });
 
-  // Destination marker (red)
-  new google.maps.Marker({
-    position: destinationCoords,
-    map,
-    title: 'Destination',
-    icon: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'
-  });
+      // Create custom pins for better visibility
+      const currentLocationPin = new PinElement({
+        background: '#22c55e', // Green color
+        borderColor: '#16a34a',
+        glyphColor: '#ffffff',
+        glyph: '📍'
+      });
 
-  // Route line with direction arrow
-  const routeLine = new google.maps.Polyline({
-    path: [parcel.currentLocation, destinationCoords],
-    geodesic: true,
-    strokeColor: '#4285F4',
-    strokeOpacity: 0.9,
-    strokeWeight: 4,
-    icons: [{
+      const destinationPin = new PinElement({
+        background: '#ef4444', // Red color
+        borderColor: '#dc2626',
+        glyphColor: '#ffffff',
+        glyph: '🎯'
+      });
+
+      // Current location marker using AdvancedMarkerElement
+      new AdvancedMarkerElement({
+        position: parcel.currentLocation,
+        map,
+        title: 'Current Location',
+        content: currentLocationPin.element
+      });
+
+      // Destination marker using AdvancedMarkerElement
+      new AdvancedMarkerElement({
+        position: destinationCoords,
+        map,
+        title: 'Destination',
+        content: destinationPin.element
+      });
+
+      // Route line with direction arrow
+      const routeLine = new google.maps.Polyline({
+        path: [parcel.currentLocation, destinationCoords],
+        geodesic: true,
+        strokeColor: '#4285F4',
+        strokeOpacity: 0.9,
+        strokeWeight: 4,
+        icons: [{
+          icon: {
+            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+            scale: 3,
+            strokeColor: '#4285F4',
+            fillColor: '#4285F4',
+            fillOpacity: 1
+          },
+          offset: '50%' // Arrow appears at the center of the line
+        }],
+        map
+      });
+
+      // Fit bounds around both markers
+      const bounds = new google.maps.LatLngBounds();
+      bounds.extend(parcel.currentLocation);
+      bounds.extend(destinationCoords);
+      map.fitBounds(bounds);
+
+      // Add some padding to the bounds
+      const padding = { top: 50, right: 50, bottom: 50, left: 50 };
+      map.fitBounds(bounds, padding);
+
+    } catch (error) {
+      console.error('Error rendering Google Map:', error);
+      // Fallback to legacy markers if AdvancedMarkerElement fails
+      this.renderLegacyGoogleMap(parcel);
+    }
+  }
+
+  // Fallback method using legacy markers (for compatibility)
+  renderLegacyGoogleMap(parcel: Parcel): void {
+    const destinationCoords = this.getLatLng(parcel.to);
+
+    const map = new google.maps.Map(document.getElementById('google-map'), {
+      center: parcel.currentLocation,
+      zoom: 7
+    });
+
+    // Current location marker (green) - legacy
+    new google.maps.Marker({
+      position: parcel.currentLocation,
+      map,
+      title: 'Current Location',
       icon: {
-        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-        scale: 3,
-        strokeColor: '#4285F4'
-      },
-      offset: '50%' // Arrow appears at the center of the line
-    }],
-    map
-  });
+        url: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
+        scaledSize: new google.maps.Size(32, 32)
+      }
+    });
 
-  // Fit bounds around both markers
-  const bounds = new google.maps.LatLngBounds();
-  bounds.extend(parcel.currentLocation);
-  bounds.extend(destinationCoords);
-  map.fitBounds(bounds);
-}
+    // Destination marker (red) - legacy
+    new google.maps.Marker({
+      position: destinationCoords,
+      map,
+      title: 'Destination',
+      icon: {
+        url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+        scaledSize: new google.maps.Size(32, 32)
+      }
+    });
 
+    // Route line with direction arrow
+    const routeLine = new google.maps.Polyline({
+      path: [parcel.currentLocation, destinationCoords],
+      geodesic: true,
+      strokeColor: '#4285F4',
+      strokeOpacity: 0.9,
+      strokeWeight: 4,
+      icons: [{
+        icon: {
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 3,
+          strokeColor: '#4285F4',
+          fillColor: '#4285F4',
+          fillOpacity: 1
+        },
+        offset: '50%'
+      }],
+      map
+    });
+
+    // Fit bounds around both markers
+    const bounds = new google.maps.LatLngBounds();
+    bounds.extend(parcel.currentLocation);
+    bounds.extend(destinationCoords);
+    map.fitBounds(bounds);
+  }
 
   openInfo(parcel: Parcel): void {
     this.selectedParcel = parcel;

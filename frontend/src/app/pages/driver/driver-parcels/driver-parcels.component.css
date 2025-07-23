@@ -1,0 +1,458 @@
+/* Import elegant font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Root variables - your beautiful burgundy palette */
+:root {
+  --primary-color: #800020;
+  --primary-hover: #a00028;
+  --text-dark: #000000;
+  --text-light: #ffffff;
+  --background-light: #ffffff;
+  --background-muted: #f8f9fa;
+  
+  /* Additional sophisticated colors */
+  --border-light: #e5e7eb;
+  --border-medium: #d1d5db;
+  --shadow-light: rgba(0, 0, 0, 0.05);
+  --shadow-medium: rgba(0, 0, 0, 0.1);
+  --shadow-strong: rgba(128, 0, 32, 0.15);
+  --gradient-subtle: linear-gradient(135deg, #fafbfc 0%, #f8f9fa 100%);
+}
+
+/* Base styling */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+  color: var(--text-dark);
+  background: var(--background-light);
+}
+
+/* Container heading spacing */
+h2 {
+  margin-bottom: 3rem;
+  margin-top: 3rem;
+  font-size: 2.8rem;
+  font-weight: 800;
+  text-align: left;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: slideInDown 0.8s ease;
+  position: relative;
+  display: inline-block; /* This is key */
+}
+
+h2::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: var(--primary-gradient);
+  border-radius: 2px;
+  box-shadow: 0 2px 10px var(--shadow-burgundy);
+}
+
+
+/* Filter Bar - Sophisticated and Clean */
+.filter-bar {
+  padding: 2rem;
+  border-radius: 16px;
+  margin-bottom: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  position: relative;
+}
+
+.filter-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: 16px 16px 0 0;
+}
+
+.filter-bar input,
+.filter-bar select {
+  padding: 10px;
+  border: 1px solid var(--primary-color);
+  width: 150px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-dark);
+  background: var(--background-light);
+  /* transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); */
+  box-shadow: 0 2px 8px var(--shadow-light);
+  position: relative;
+}
+
+.filter-bar input:focus,
+.filter-bar select:focus {
+  outline: none;
+  border-color: var(--primary-hover);
+  box-shadow: 0 0 0 3px rgba(128, 0, 32, 0.15), 0 4px 12px var(--shadow-strong);
+  transform: translateY(-2px);
+}
+
+.filter-bar input::placeholder {
+  color: black;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.filter-bar select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23800020' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 1rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 3rem;
+  font-weight: 500;
+  color: var(--primary-color);
+}
+
+.filter-bar select:hover,
+.filter-bar input:hover {
+  border-color: var(--primary-hover);
+  background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--shadow-strong);
+}
+
+.filter-bar select option {
+  background: var(--background-light);
+  color: var(--primary-color);
+  font-weight: 500;
+  padding: 0.5rem;
+}
+
+/* Parcel Cards - Elegant and Readable */
+.parcel-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.card {
+  background: var(--background-light);
+  border: 2px solid var(--primary-color);
+  border-radius: 16px;
+  padding: 1.75rem;
+  box-shadow: 0 4px 16px var(--shadow-strong);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-hover));
+  opacity: 1;
+}
+
+.card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px var(--shadow-strong);
+  border-color: var(--primary-hover);
+}
+
+.card h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+  letter-spacing: -0.01em;
+}
+
+.card p {
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.card p strong {
+  color: var(--text-dark);
+  font-weight: 500;
+}
+
+/* BUTTONS - put on own row below text */
+.card button {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  color: var(--text-light);
+  border: 2px solid var(--primary-color);
+  padding: 0.875rem 1.75rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 0.75rem;
+  margin-top: 1rem; /* space above buttons */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px var(--shadow-strong);
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+}
+
+/* This forces the buttons onto a new line by making the paragraph block elements */
+.card p:last-of-type {
+  margin-bottom: 1.5rem; /* Add extra space below last parcel info paragraph */
+  display: block;
+}
+
+/* Button hover animations */
+.card button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.card button:hover::before {
+  left: 100%;
+}
+
+.card button:hover {
+  background: linear-gradient(135deg, var(--primary-hover), #b5002d);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px var(--shadow-strong);
+  border-color: var(--primary-hover);
+}
+
+.card button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px var(--shadow-strong);
+}
+
+/* Modal Styling - Enhanced for better visibility */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: var(--background-light);
+  border-radius: 20px;
+  padding: 2.5rem;
+  max-width: 95vw;
+  width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+  border: 2px solid var(--primary-color);
+  position: relative;
+}
+
+.modal-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-hover));
+  border-radius: 20px 20px 0 0;
+}
+
+.modal-content h3 {
+  color: var(--primary-color);
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+.modal-content p {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.modal-content p strong {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+/* Map container - Enhanced width and styling */
+#google-map {
+  height: 500px;
+  width: 100%;
+  border-radius: 16px;
+  border: 3px solid var(--primary-color);
+  margin: 1.5rem 0;
+  box-shadow: 0 8px 24px var(--shadow-strong);
+  position: relative;
+}
+
+#google-map::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  background: linear-gradient(45deg, var(--primary-color), var(--primary-hover));
+  border-radius: 16px;
+  z-index: -1;
+}
+
+/* Modal close button */
+.modal-content button {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  color: var(--text-light);
+  border: none;
+  padding: 1rem 2.5rem;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px var(--shadow-strong);
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  overflow: hidden;
+}
+
+.modal-content button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.modal-content button:hover::before {
+  left: 100%;
+}
+
+.modal-content button:hover {
+  background: linear-gradient(135deg, var(--primary-hover), #b5002d);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--shadow-strong);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) 
+{
+  .parcel-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .modal-content {
+    margin: 1rem;
+    padding: 2rem;
+    width: 95vw;
+    max-width: 95vw;
+  }
+  
+  #google-map {
+    height: 350px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-content {
+    padding: 1.5rem;
+  }
+  
+  #google-map {
+    height: 300px;
+  }
+  
+  .card button {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Subtle animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.modal {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Enhanced focus states for accessibility */
+.card:focus-within {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Subtle hover effects for better UX */
+.filter-bar input:hover,
+.filter-bar select:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 2px 8px var(--shadow-light);
+}

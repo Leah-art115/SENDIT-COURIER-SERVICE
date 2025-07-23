@@ -1,0 +1,93 @@
+@baseUrl = http://localhost:3000/api
+
+### 🔑 Admin Login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sendit.com",
+  "password": "Admin@1234"
+}
+
+### 👤 Register a New User
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "johndoech@example.com",
+  "phone": "0712345678",
+  "password": "password123"
+}
+
+### 🔐 Login as User
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "johndoech@example.com",
+  "password": "password123"
+}
+
+### 🛵 Create Driver (Admin only)
+POST {{baseUrl}}/auth/create-driver
+Content-Type: application/json
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+{
+  "name": "Rider One",
+  "email": "driver2@example.com",
+  "password": "driverpassword",
+  "mode": "MOTORCYCLE"
+}
+
+### 🛵 Login as Driver
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "driver2@example.com",
+  "password": "driverpassword"
+}
+
+### 🧑‍✈️ Admin Gets All Drivers
+GET {{baseUrl}}/admin/drivers
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+### 📦 Admin Gets All Parcels
+GET {{baseUrl}}/parcels
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+### 🚚 Admin Assigns Parcel to Driver
+PATCH {{baseUrl}}/parcels/{{PARCEL_ID}}/assign-driver
+Content-Type: application/json
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+{
+  "driverId": "{{DRIVER_ID}}"
+}
+
+### 📦 Driver Gets Their Assigned Parcels
+GET {{baseUrl}}/driver/my-parcels
+Authorization: Bearer {{DRIVER_TOKEN}}
+
+### 📍 Driver Updates Location for Specific Parcel
+PATCH {{baseUrl}}/driver/location/{{PARCEL_ID}}
+Content-Type: application/json
+Authorization: Bearer {{DRIVER_TOKEN}}
+
+{
+  "location": "Westlands, Nairobi"
+}
+
+### 🚚 Driver Marks Parcel as Picked Up
+PATCH {{baseUrl}}/driver/mark-picked-up/{{PARCEL_ID}}
+Authorization: Bearer {{DRIVER_TOKEN}}
+
+### 📥 User Marks Parcel as Collected
+PATCH {{baseUrl}}/user/mark-collected/{{PARCEL_ID}}
+Authorization: Bearer {{USER_TOKEN}}
+
+### 📤 User Marks Parcel as Picked Up by Driver
+PATCH {{baseUrl}}/user/mark-driver-picked-up/{{PARCEL_ID}}
+Authorization: Bearer {{USER_TOKEN}}

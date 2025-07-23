@@ -29,22 +29,34 @@
 </div>
 
 <div class="parcel-cards">
-  <div class="card" *ngFor="let p of          paginatedParcels">
+  <div class="card" *ngFor="let p of paginatedParcels">
 
     <h3>{{ p.id }}</h3>
     <p><strong>Sender:</strong> {{ p.sender }}</p>
     <p><strong>Receiver:</strong> {{ p.receiver }}</p>
-    <p><strong>Status:</strong>
-      <select [value]="p.status" (change)="updateStatus(p, $event)">
-        <option>In Transit</option>
-        <option>Delivered</option>
-        <option>Picked Up</option>
-        <option>Cancelled</option>
-      </select>
-    </p>
+    <p><strong>Status:</strong> {{ p.status }}</p>
     <p><strong>From:</strong> {{ p.from }} → <strong>To:</strong> {{ p.to }}</p>
-    <button (click)="openMap(p)">Track</button>
-    <button (click)="openInfo(p)">View More</button>
+    
+    <!-- Driver Assignment Section -->
+    <div class="driver-section">
+      <div *ngIf="!p.assignedDriver" class="driver-assignment">
+        <label class="driver-label">Assign Driver:</label>
+        <select class="driver-select" [disabled]="availableDrivers.length === 0" (change)="assignDriver(p, $event)">
+          <option value="">{{ availableDrivers.length === 0 ? 'No available drivers' : 'Select a driver' }}</option>
+          <option *ngFor="let driver of availableDrivers" [value]="driver.id">{{ driver.name }}</option>
+        </select>
+      </div>
+      
+      <div *ngIf="p.assignedDriver" class="assigned-driver">
+        <p class="driver-info"><strong>Assigned Driver:</strong> {{ p.assignedDriver.name }}</p>
+        <button class="unassign-btn" (click)="confirmUnassign(p)">Unassign</button>
+      </div>
+    </div>
+
+    <div class="card-actions">
+      <button (click)="openMap(p)">Track</button>
+      <button (click)="openInfo(p)">View More</button>
+    </div>
   </div>
 </div>
 
@@ -70,14 +82,41 @@
     <p><strong>Weight:</strong> {{ selectedParcel?.weight }}</p>
     <p><strong>Description:</strong> {{ selectedParcel?.description }}</p>
     <p><strong>Date Sent:</strong> {{ selectedParcel?.dateSent }}</p>
+    
+    <!-- Driver Assignment in Modal -->
+    <div class="modal-driver-section">
+      <div *ngIf="!selectedParcel?.assignedDriver" class="driver-assignment">
+        <label class="driver-label">Assign Driver:</label>
+        <select class="driver-select" [disabled]="availableDrivers.length === 0" (change)="assignDriver(selectedParcel!, $event)">
+          <option value="">{{ availableDrivers.length === 0 ? 'No available drivers' : 'Select a driver' }}</option>
+          <option *ngFor="let driver of availableDrivers" [value]="driver.id">{{ driver.name }}</option>
+        </select>
+      </div>
+      
+      <div *ngIf="selectedParcel?.assignedDriver" class="assigned-driver">
+        <p class="driver-info"><strong>Assigned Driver:</strong> {{ selectedParcel?.assignedDriver?.name }}</p>
+        <button class="unassign-btn" (click)="confirmUnassign(selectedParcel!)">Unassign</button>
+      </div>
+    </div>
+    
     <button (click)="closeModals()">Close</button>
+  </div>
+</div>
+
+<!-- CONFIRMATION MODAL -->
+<div class="modal confirmation-modal" *ngIf="showConfirmModal">
+  <div class="modal-content confirmation-content">
+    <h3>Confirm Unassignment</h3>
+    <p>Are you sure you want to unassign <strong>{{ parcelToUnassign?.assignedDriver?.name }}</strong> from parcel <strong>{{ parcelToUnassign?.id }}</strong>?</p>
+    <div class="confirmation-buttons">
+      <button class="cancel-btn" (click)="cancelUnassign()">Cancel</button>
+      <button class="confirm-btn" (click)="unassignDriver()">Yes, Unassign</button>
+    </div>
   </div>
 </div>
 
 <div class="pagination">
   <button (click)="prevPage()" [disabled]="currentPage === 1">Prev</button>
-
   <span>Page {{ currentPage }} of {{ totalPages }}</span>
-
   <button (click)="nextPage()" [disabled]="currentPage === totalPages">Next</button>
 </div>

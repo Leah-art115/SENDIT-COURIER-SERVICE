@@ -1,0 +1,253 @@
+<h1>Courier Drivers</h1>
+
+<div class="header-bar">
+  <input type="text" [(ngModel)]="search" placeholder="Search drivers..." />
+  
+  <!-- Status Filter -->
+  <select [(ngModel)]="statusFilter" class="status-filter">
+    <option value="">All Statuses</option>
+    <option value="Available">Available</option>
+    <option value="On Delivery">On Delivery</option>
+    <option value="Out Sick">Out Sick</option>
+    <option value="On Leave">On Leave</option>
+    <option value="Suspended">Suspended</option>
+  </select>
+
+  <!-- View Toggle -->
+  <button (click)="toggleView()" class="toggle-btn">
+    {{ showArchived ? '👥 Active Drivers' : ' Deleted Drivers' }}
+  </button>
+
+  <button (click)="openModal()" class="add-btn" [disabled]="showArchived">
+    ➕ Add Driver
+  </button>
+</div>
+
+<!-- Bulk Actions (when drivers are selected) -->
+<div class="bulk-actions" *ngIf="selectedDriverIds.length > 0">
+  <span>{{ selectedDriverIds.length }} drivers selected</span>
+  <button (click)="bulkStatusChange('Available')" class="bulk-btn">Set Available</button>
+  <button (click)="bulkStatusChange('Out Sick')" class="bulk-btn">Set Out Sick</button>
+  <button (click)="bulkStatusChange('On Leave')" class="bulk-btn">Set On Leave</button>
+  <button (click)="bulkStatusChange('Suspended')" class="bulk-btn">Suspend</button>
+  <button (click)="clearSelection()" class="clear-btn">Clear Selection</button>
+</div>
+
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <input type="checkbox" 
+                 [checked]="allSelected" 
+                 (change)="toggleAllSelection()"
+                 [disabled]="showArchived">
+        </th>
+        <th>#</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Mode</th>
+        <th>Status</th>
+        <th>Can Receive Tasks</th>
+        <th *ngIf="showArchived">Deleted Date</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let driver of paginatedDrivers; let i = index">
+        <td>
+          <input type="checkbox" 
+                 [checked]="selectedDriverIds.includes(driver.id)"
+                 (change)="toggleDriverSelection(driver.id)"
+                 [disabled]="showArchived">
+        </td>
+        <td>{{ (currentPage - 1) * itemsPerPage + i + 1 }}</td>
+        <td>{{ driver.name }}</td>
+        <td>{{ driver.email }}</td>
+        <td>{{ driver.mode }}</td>
+        <td>
+          <span class="status" [ngClass]="getStatusClass(driver.status)">
+            {{ driver.status }}
+          </span>
+        </td>
+        <td>
+          <span class="assignment-status" [ngClass]="driver.canReceiveAssignments ? 'can-assign' : 'cannot-assign'">
+            {{ driver.canReceiveAssignments ? '✅ Yes' : '❌ No' }}
+          </span>
+        </td>
+        <td *ngIf="showArchived">{{ formatDate(driver.deletedAt) }}</td>
+        <td>
+          <button class="action-btn" (click)="openActionModal(driver)">
+            ⋮
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <div *ngIf="paginatedDrivers.length === 0" class="no-data">
+    <p>{{ showArchived ? 'No archived drivers found' : 'No drivers found' }}</p>
+  </div>
+</div>
+
+<div class="pagination">
+  <button (click)="prevPage()" [disabled]="currentPage === 1">Prev</button>
+  <span>Page {{ currentPage }} of {{ totalPages }}</span>
+  <button (click)="nextPage()" [disabled]="currentPage === totalPages">Next</button>
+</div>
+
+<!-- Add Driver Modal -->
+<div class="modal" *ngIf="showModal">
+  <div class="modal-content">
+    <h3>Add New Driver</h3>
+    <label>Name:</label>
+    <input [(ngModel)]="newDriver.name" placeholder="Enter driver name" />
+    
+    <label>Email:</label>
+    <input [(ngModel)]="newDriver.email" type="email" placeholder="Enter email address" />
+    
+    <label>Password:</label>
+    <input type="password" placeholder="Enter password" />
+    
+    <label>Courier Mode:</label>
+    <select [(ngModel)]="newDriver.mode">
+      <option value="Bicycle"> Bicycle</option>
+      <option value="Skates">Skates</option>
+      <option value="Motorcycle"> Motorcycle</option>
+      <option value="Car"> Car</option>
+    </select>
+    
+    <div class="modal-actions">
+      <button class="save-btn" (click)="saveDriver()" [disabled]="!isValidDriver(newDriver)">Save</button>
+      <button class="cancel-btn" (click)="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Driver Modal -->
+<div class="modal" *ngIf="showEditModal">
+  <div class="modal-content">
+    <h3>Edit Driver</h3>
+    <label>Name:</label>
+    <input [(ngModel)]="editDriver.name" />
+    
+    <label>Email:</label>
+    <input [(ngModel)]="editDriver.email" type="email" />
+    
+    <label>Courier Mode:</label>
+    <select [(ngModel)]="editDriver.mode">
+      <option value="Bicycle">Bicycle</option>
+      <option value="Skates">Skates</option>
+      <option value="Motorcycle"> Motorcycle</option>
+      <option value="Car">Car</option>
+    </select>
+    
+    <label>Status:</label>
+    <select [(ngModel)]="editDriver.status" (change)="onStatusChange()">
+      <option value="Available"> Available</option>
+      <option value="Out Sick">Out Sick</option>
+      <option value="On Leave"> On Leave</option>
+      <option value="Suspended"> Suspended</option>
+    </select>
+    
+    <div class="status-info">
+      <small>
+        <strong>Note:</strong> 
+        {{ getStatusDescription(editDriver.status) }}
+      </small>
+    </div>
+    
+    <div class="modal-actions">
+      <button class="save-btn" (click)="updateDriver()">Update</button>
+      <button class="cancel-btn" (click)="closeEditModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Status Change Modal -->
+<div class="modal" *ngIf="showStatusModal">
+  <div class="modal-content">
+    <h3>Change Driver Status</h3>
+    <p>Change status for <strong>{{ selectedDriver?.name }}</strong></p>
+    
+    <div class="status-options">
+      <label class="status-option">
+        <input type="radio" [(ngModel)]="tempStatus" value="Available" name="status">
+        <span>Available - Can receive new deliveries</span>
+      </label>
+      
+      <label class="status-option">
+        <input type="radio" [(ngModel)]="tempStatus" value="Out Sick" name="status">
+        <span>Out Sick - Temporarily unavailable</span>
+      </label>
+      
+      <label class="status-option">
+        <input type="radio" [(ngModel)]="tempStatus" value="On Leave" name="status">
+        <span>On Leave - Scheduled time off</span>
+      </label>
+      
+      <label class="status-option">
+        <input type="radio" [(ngModel)]="tempStatus" value="Suspended" name="status">
+        <span>Suspended - Account restricted</span>
+      </label>
+    </div>
+    
+    <div class="modal-actions">
+      <button class="save-btn" (click)="changeDriverStatus()">Change Status</button>
+      <button class="cancel-btn" (click)="closeStatusModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Action Modal -->
+<div class="modal small" *ngIf="showActionModal">
+  <div class="modal-content">
+    <h4>{{ selectedDriver?.name }} - Actions</h4>
+    
+    <div class="action-grid" *ngIf="!showArchived">
+      <button (click)="openEditModalFromAction(selectedDriver!)">
+        Edit Details
+      </button>
+      
+      <button (click)="openStatusModal(selectedDriver!)">
+        Change Status
+      </button>
+      
+      <button (click)="suspendDriver(selectedDriver!)" 
+              [disabled]="selectedDriver?.status === 'Suspended'">
+        {{ selectedDriver?.status === 'Suspended' ? 'Already Suspended' : 'Suspend Driver' }}
+      </button>
+      
+      <button (click)="confirmDeleteDriver(selectedDriver!)" class="delete-btn">
+        Delete Driver
+      </button>
+    </div>
+    
+    <div class="action-grid" *ngIf="showArchived">
+      <button (click)="restoreDriver(selectedDriver!)">
+        ↩Restore Driver
+      </button>
+      
+      <button (click)="confirmPermanentDelete(selectedDriver!)" class="delete-btn">
+        Delete Permanently
+      </button>
+    </div>
+    
+    <button class="cancel-btn" (click)="closeActionModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal" *ngIf="showConfirmModal">
+  <div class="modal-content">
+    <h3>{{ confirmAction.title }}</h3>
+    <p>{{ confirmAction.message }}</p>
+    
+    <div class="modal-actions">
+      <button class="confirm-btn" (click)="executeConfirmAction()">
+        {{ confirmAction.confirmText }}
+      </button>
+      <button class="cancel-btn" (click)="closeConfirmModal()">Cancel</button>
+    </div>
+  </div>
+</div>

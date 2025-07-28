@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserNavbarComponent } from '../user-navbar/user-navbar.component';
 import { UserService, UserProfile } from '../../../services/user.service';
-import { NotificationService } from '../../../shared/notification/notification.service'; // Added
+import { NotificationService } from '../../../shared/notification/notification.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { catchError, map, switchMap } from 'rxjs/operators';
@@ -25,15 +25,10 @@ interface Parcel {
   paymentMethod: string;
   deliveryMode: string;
   expectedDelivery: string;
-  price: string; // Added
-  currentLocation: {
-    lat: number;
-    lng: number;
-  };
-  destinationLocation: {
-    lat: number;
-    lng: number;
-  };
+  price: string;
+  pickupLocation: { lat: number; lng: number }; // Added
+  currentLocation: { lat: number; lng: number };
+  destinationLocation: { lat: number; lng: number };
 }
 
 @Component({
@@ -62,7 +57,7 @@ export class SentComponent implements OnInit, AfterViewInit {
   constructor(
     private userService: UserService,
     private http: HttpClient,
-    private notificationService: NotificationService // Added
+    private notificationService: NotificationService
   ) {}
 
   private getAuthHeaders(): HttpHeaders {
@@ -108,18 +103,19 @@ export class SentComponent implements OnInit, AfterViewInit {
             description: parcel.description || 'No description',
             type: parcel.type,
             weight: `${parcel.weight} kg`,
-            paymentMethod: 'Unknown', // Not in backend schema, default value
+            paymentMethod: 'Unknown',
             deliveryMode: parcel.mode,
             expectedDelivery: parcel.deliveredAt
               ? new Date(parcel.deliveredAt).toISOString().split('T')[0]
               : new Date(new Date(parcel.sentAt).getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            price: parcel.price != null ? `KSh ${parcel.price.toFixed(2)}` : 'N/A', // Added
-            currentLocation: { lat: parcel.fromLat || 0, lng: parcel.fromLng || 0 },
+            price: parcel.price != null ? `KSh ${parcel.price.toFixed(2)}` : 'N/A',
+            pickupLocation: { lat: parcel.fromLat || 0, lng: parcel.fromLng || 0 }, // Added
+            currentLocation: { lat: parcel.status === 'DELIVERED' ? parcel.destinationLat : (parcel.fromLat || 0), lng: parcel.status === 'DELIVERED' ? parcel.destinationLng : (parcel.fromLng || 0) }, // Updated
             destinationLocation: { lat: parcel.destinationLat || 0, lng: parcel.destinationLng || 0 }
           }))),
           catchError((error: unknown) => {
             console.error('Failed to load sent parcels:', error);
-            this.notificationService.error('Failed to load sent parcels.'); // Updated
+            this.notificationService.error('Failed to load sent parcels.');
             return throwError(() => new Error('Failed to load sent parcels'));
           })
         );
@@ -130,7 +126,7 @@ export class SentComponent implements OnInit, AfterViewInit {
       },
       error: (error: unknown) => {
         console.error('Error processing parcels:', error);
-        this.notificationService.error('Error processing parcels.'); // Updated
+        this.notificationService.error('Error processing parcels.');
       }
     });
   }
@@ -153,7 +149,7 @@ export class SentComponent implements OnInit, AfterViewInit {
 
     script.onerror = () => {
       console.error('Failed to load Google Maps script');
-      this.notificationService.error('Failed to load Google Maps.'); // Updated
+      this.notificationService.error('Failed to load Google Maps.');
     };
 
     document.head.appendChild(script);
@@ -174,9 +170,16 @@ export class SentComponent implements OnInit, AfterViewInit {
       const { AdvancedMarkerElement, PinElement } = await (window as any).google.maps.importLibrary("marker");
 
       const map = new google.maps.Map(document.getElementById('google-map'), {
-        center: parcel.currentLocation,
+        center: parcel.status === 'DELIVERED' ? parcel.destinationLocation : parcel.currentLocation,
         zoom: 7,
         mapId: 'DEMO_MAP_ID'
+      });
+
+      const pickupPin = new PinElement({
+        background: '#3b82f6',
+        borderColor: '#2563eb',
+        glyphColor: '#ffffff',
+        glyph: '📍'
       });
 
       const currentLocationPin = new PinElement({
@@ -194,6 +197,13 @@ export class SentComponent implements OnInit, AfterViewInit {
       });
 
       new AdvancedMarkerElement({
+        position: parcel.pickupLocation,
+        map,
+        title: 'Pickup Location',
+        content: pickupPin.element
+      });
+
+      new AdvancedMarkerElement({
         position: parcel.currentLocation,
         map,
         title: 'Current Location',
@@ -207,8 +217,10 @@ export class SentComponent implements OnInit, AfterViewInit {
         content: destinationPin.element
       });
 
+      const path = parcel.status === 'DELIVERED' ? [parcel.pickupLocation, parcel.destinationLocation] : [parcel.pickupLocation, parcel.currentLocation, parcel.destinationLocation];
+
       const routeLine = new google.maps.Polyline({
-        path: [parcel.currentLocation, parcel.destinationLocation],
+        path,
         geodesic: true,
         strokeColor: '#4285F4',
         strokeOpacity: 0.9,
@@ -227,21 +239,34 @@ export class SentComponent implements OnInit, AfterViewInit {
       });
 
       const bounds = new google.maps.LatLngBounds();
-      bounds.extend(parcel.currentLocation);
+      bounds.extend(parcel.pickupLocation);
+      if (parcel.status !== 'DELIVERED') {
+        bounds.extend(parcel.currentLocation);
+      }
       bounds.extend(parcel.destinationLocation);
       map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
 
     } catch (error) {
       console.error('Error rendering Google Map:', error);
-      this.notificationService.error('Failed to render Google Map.'); // Updated
+      this.notificationService.error('Failed to render Google Map.');
       this.renderLegacyGoogleMap(parcel);
     }
   }
 
   renderLegacyGoogleMap(parcel: Parcel): void {
     const map = new google.maps.Map(document.getElementById('google-map'), {
-      center: parcel.currentLocation,
+      center: parcel.status === 'DELIVERED' ? parcel.destinationLocation : parcel.currentLocation,
       zoom: 7
+    });
+
+    new google.maps.Marker({
+      position: parcel.pickupLocation,
+      map,
+      title: 'Pickup Location',
+      icon: {
+        url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+        scaledSize: new google.maps.Size(32, 32)
+      }
     });
 
     new google.maps.Marker({
@@ -264,8 +289,10 @@ export class SentComponent implements OnInit, AfterViewInit {
       }
     });
 
+    const path = parcel.status === 'DELIVERED' ? [parcel.pickupLocation, parcel.destinationLocation] : [parcel.pickupLocation, parcel.currentLocation, parcel.destinationLocation];
+
     const routeLine = new google.maps.Polyline({
-      path: [parcel.currentLocation, parcel.destinationLocation],
+      path,
       geodesic: true,
       strokeColor: '#4285F4',
       strokeOpacity: 0.9,
@@ -284,7 +311,10 @@ export class SentComponent implements OnInit, AfterViewInit {
     });
 
     const bounds = new google.maps.LatLngBounds();
-    bounds.extend(parcel.currentLocation);
+    bounds.extend(parcel.pickupLocation);
+    if (parcel.status !== 'DELIVERED') {
+      bounds.extend(parcel.currentLocation);
+    }
     bounds.extend(parcel.destinationLocation);
     map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
   }

@@ -8,6 +8,7 @@ import { ParcelModule } from './parcel/parcel.module';
 import { AdminModule } from './admin/admin.module';
 import { DriverModule } from './driver/driver.module';
 import { UserModule } from './user/user.module';
+import { AppMailerModule } from './mailer/mailer.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { UserModule } from './user/user.module';
     AdminModule,
     DriverModule,
     UserModule,
+    AppMailerModule,
   ],
   controllers: [AppController],
   providers: [AppService],

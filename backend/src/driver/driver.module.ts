@@ -6,9 +6,10 @@ import { AuthModule } from '../auth/auth.module';
 import { AuthGuard } from '../guards/auth.guard';
 import { RolesGuard } from '../guards/roles/roles.guard';
 import { ParcelService } from '../parcel/parcel.service';
+import { AppMailerModule } from 'src/mailer/mailer.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule],
+  imports: [PrismaModule, AppMailerModule, AuthModule],
   controllers: [DriverController],
   providers: [DriverService, ParcelService, AuthGuard, RolesGuard],
 })

@@ -1,10 +1,9 @@
 <h1>All Parcels</h1>
-
 <div class="filter-bar">
-  <input type="text" [(ngModel)]="filterName" placeholder="Search by sender" />
+  <input type="text" [(ngModel)]="filterPerson" placeholder="Search by name" />
+  <input type="text" [(ngModel)]="filterLocation" placeholder="Search by location" />
   <input type="date" [(ngModel)]="filterDateFrom" />
   <input type="date" [(ngModel)]="filterDateTo" />
-
   <select [(ngModel)]="filterStatus">
     <option value="">All Statuses</option>
     <option>In Transit</option>
@@ -12,13 +11,11 @@
     <option>Picked Up</option>
     <option>Cancelled</option>
   </select>
-
   <select [(ngModel)]="filterMode">
     <option value="">All Modes</option>
     <option>Express</option>
     <option>Standard</option>
   </select>
-
   <select [(ngModel)]="filterType">
     <option value="">All Types</option>
     <option>Boxed Package</option>
@@ -27,7 +24,6 @@
     <option>Suitcase</option>
   </select>
 </div>
-
 <div class="parcel-cards">
   <div class="card" *ngFor="let p of paginatedParcels">
     <h3>{{ p.trackingId }}</h3>
@@ -35,16 +31,15 @@
     <p><strong>Receiver:</strong> {{ p.receiverName }}</p>
     <p><strong>Status:</strong> {{ p.status }}</p>
     <p><strong>From:</strong> {{ p.from }} → <strong>To:</strong> {{ p.to }}</p>
-
+    <p><strong>Price:</strong> {{ p.price }}</p>
     <!-- Driver Assignment Section -->
     <div class="driver-section">
       <ng-container *ngIf="p.assignedDriver; else assignBlock">
         <p class="driver-info">
           <strong>Assigned Driver:</strong> {{ p.assignedDriver.name }}
         </p>
-        <button class="unassign-btn" (click)="confirmUnassign(p)">Unassign</button>
+        <button *ngIf="canUnassign(p.status)" class="unassign-btn" (click)="confirmUnassign(p)">Unassign</button>
       </ng-container>
-
       <ng-template #assignBlock>
         <div *ngIf="availableDrivers.length > 0; else noDriversCard">
           <label class="driver-label">Assign Driver:</label>
@@ -60,14 +55,12 @@
         </ng-template>
       </ng-template>
     </div>
-
     <div class="card-actions">
       <button (click)="openMap(p)">Track</button>
       <button (click)="openInfo(p)">View More</button>
     </div>
   </div>
 </div>
-
 <!-- MAP MODAL -->
 <div class="modal" *ngIf="showMapModal && selectedParcel">
   <div class="modal-content">
@@ -76,30 +69,28 @@
     <button (click)="closeModals()">Close</button>
   </div>
 </div>
-
 <!-- INFO MODAL -->
 <div class="modal" *ngIf="showInfoModal && selectedParcel">
   <div class="modal-content">
     <h3>Parcel Details - {{ selectedParcel.trackingId }}</h3>
-    <p><strong>Sender:</strong> {{ selectedParcel.senderName }}</p>
-    <p><strong>Receiver:</strong> {{ selectedParcel.receiverName }}</p>
+    <p><strong>Sender:</strong> {{ selectedParcel.senderName }} ({{ selectedParcel.senderEmail }})</p>
+    <p><strong>Receiver:</strong> {{ selectedParcel.receiverName }} ({{ selectedParcel.receiverEmail }})</p>
     <p><strong>From:</strong> {{ selectedParcel.from }} → <strong>To:</strong> {{ selectedParcel.to }}</p>
     <p><strong>Status:</strong> {{ selectedParcel.status }}</p>
     <p><strong>Type:</strong> {{ selectedParcel.type }}</p>
     <p><strong>Mode:</strong> {{ selectedParcel.mode }}</p>
     <p><strong>Weight:</strong> {{ selectedParcel.weight }}</p>
+    <p><strong>Price:</strong> {{ selectedParcel.price }}</p>
     <p><strong>Description:</strong> {{ selectedParcel.description }}</p>
-    <p><strong>Date Sent:</strong> {{ selectedParcel.dateSent }}</p>
-
+    <p><strong>Date Sent:</strong> {{ formatDate(selectedParcel.dateSent) }}</p>
     <!-- Driver Assignment in Modal -->
     <div class="modal-driver-section">
       <ng-container *ngIf="selectedParcel.assignedDriver; else assignModalBlock">
         <p class="driver-info">
           <strong>Assigned Driver:</strong> {{ selectedParcel.assignedDriver.name }}
         </p>
-        <button class="unassign-btn" (click)="confirmUnassign(selectedParcel)">Unassign</button>
+        <button *ngIf="canUnassign(selectedParcel.status)" class="unassign-btn" (click)="confirmUnassign(selectedParcel)">Unassign</button>
       </ng-container>
-
       <ng-template #assignModalBlock>
         <div *ngIf="availableDrivers.length > 0; else noDriversModal">
           <label class="driver-label">Assign Driver:</label>
@@ -115,21 +106,16 @@
         </ng-template>
       </ng-template>
     </div>
-
     <button (click)="closeModals()">Close</button>
   </div>
 </div>
-
 <!-- CONFIRMATION MODAL -->
 <div class="modal confirmation-modal" *ngIf="showConfirmModal && parcelToUnassign">
   <div class="modal-content confirmation-content">
     <h3>Confirm Unassignment</h3>
     <ng-container *ngIf="parcelToUnassign.assignedDriver">
       <p>
-        Are you sure you want to unassign
-        <strong>{{ parcelToUnassign.assignedDriver.name }}</strong>
-        from parcel
-        <strong>{{ parcelToUnassign.trackingId }}</strong>?
+        Are you sure you want to unassign <strong>{{ parcelToUnassign.assignedDriver.name }}</strong> from parcel <strong>{{ parcelToUnassign.trackingId }}</strong>?
       </p>
     </ng-container>
     <div class="confirmation-buttons">
@@ -138,7 +124,6 @@
     </div>
   </div>
 </div>
-
 <div class="pagination">
   <button (click)="prevPage()" [disabled]="currentPage === 1">Prev</button>
   <span>Page {{ currentPage }} of {{ totalPages }}</span>

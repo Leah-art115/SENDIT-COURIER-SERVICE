@@ -7,9 +7,16 @@ import { AuthGuard } from '../guards/auth.guard';
 import { RolesGuard } from '../guards/roles/roles.guard';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
+import { AppMailerModule } from 'src/mailer/mailer.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, JwtModule.register({}), ConfigModule], // Added AuthModule
+  imports: [
+    PrismaModule,
+    AuthModule,
+    AppMailerModule,
+    JwtModule.register({}),
+    ConfigModule,
+  ], // Added AuthModule
   controllers: [ParcelController],
   providers: [ParcelService, AuthGuard, RolesGuard],
 })

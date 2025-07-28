@@ -174,4 +174,18 @@ export class AdminService {
       )
     );
   }
+
+  resendEmails(parcelId: string, emailType: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin/emails/resend/${parcelId}`, 
+      { emailType }, 
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  // Get email logs
+  getEmailLogs(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/admin/emails/logs`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
 }

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>New Parcel Assignment</title>
+</head>
+<body style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa; color: #000000;">
+<div style="background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,249,250,0.98) 100%); padding: 30px; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(128, 0, 32, 0.2); border: 1px solid rgba(128, 0, 32, 0.3);">
+    <div style="text-align: center; margin-bottom: 20px;">
+        <h1 style="color: #800020; font-size: 24px; font-weight: bold; margin: 0;">New Delivery Assignment</h1>
+    </div>
+
+    <p style="color: #000000; font-size: 16px; line-height: 1.5; margin-bottom: 15px;">Hi <%= driverName %>,</p>
+
+    <p style="color: #000000; font-size: 16px; line-height: 1.5; margin-bottom: 15px;">You have been assigned a new parcel for delivery. Please review the details below and confirm pickup when ready. 🚚</p>
+
+    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; border: 1px solid rgba(128, 0, 32, 0.3); margin: 20px 0; font-family: 'Courier New', monospace; font-weight: bold; font-size: 16px; text-align: center; color: #800020;">
+        Tracking Number: <%= trackingNumber %>
+    </div>
+
+    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0; border: 1px solid rgba(128, 0, 32, 0.3);">
+        <div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(128, 0, 32, 0.3);">
+            <span style="font-weight: bold; color: #000000; min-width: 140px; display: inline-block;">From (Sender):</span>
+            <span style="color: #000000;"><%= senderName %></span>
+        </div>
+        <div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(128, 0, 32, 0.3);">
+            <span style="font-weight: bold; color: #000000; min-width: 140px; display: inline-block;">To (Receiver):</span>
+            <span style="color: #000000;"><%= receiverName %></span>
+        </div>
+        <div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(128, 0, 32, 0.3);">
+            <span style="font-weight: bold; color: #000000; min-width: 140px; display: inline-block;">Estimated Delivery:</span>
+            <span style="color: #000000;"><%= estimatedDelivery %></span>
+        </div>
+        <div>
+            <span style="font-weight: bold; color: #000000; min-width: 140px; display: inline-block;">Assignment Status:</span>
+            <span style="color: #000000;"><span style="background-color: #c44569; color: #ffffff; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; text-transform: uppercase;">● New Assignment</span></span>
+        </div>
+    </div>
+
+    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #c44569;">
+        <h3 style="margin: 0 0 10px 0; color: #800020; font-size: 18px;">📋 Next Steps:</h3>
+        <ol style="margin: 0; padding-left: 20px; color: #000000; font-size: 16px; line-height: 1.5;">
+            <li><strong>Login to your driver portal</strong> to view complete delivery details</li>
+            <li><strong>Confirm parcel pickup</strong> from the origin location</li>
+            <li><strong>Update delivery status</strong> as you progress through the route</li>
+            <li><strong>Complete delivery</strong> and obtain recipient confirmation</li>
+        </ol>
+    </div>
+
+    <div style="text-align: center;">
+        <a href="<%= driverPortalUrl %>" style="display: inline-block; background: linear-gradient(135deg, #800020 0%, #a00028 100%); color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px; font-weight: bold; font-size: 16px; border: 1px solid rgba(128, 0, 32, 0.3); box-shadow: 0 4px 6px -1px rgba(128, 0, 32, 0.15); transition: background 0.3s ease;">Access Driver Portal</a>
+    </div>
+
+    <p style="color: #000000; font-size: 16px; line-height: 1.5; margin-top: 20px; margin-bottom: 15px;">Please ensure you have all necessary equipment and documentation before beginning the delivery process. Safe driving!</p>
+
+    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; border-left: 4px solid #c44569;">
+        <strong style="color: #000000;">Driver Support:</strong><br>
+        For any questions or assistance during delivery, contact our driver support team at
+        <a href="mailto:<%= supportEmail %>" style="color: #c44569;"><%= supportEmail %></a>
+    </div>
+</div>
+
+<div style="font-size: 12px; color: #6c757d; margin-top: 30px; text-align: center;">
+    &copy; <%= new Date().getFullYear() %> <%= appName %>. All rights reserved.<br>
+    Driver notification for tracking number <%= trackingNumber %>
+</div>
+</body>
+</html>

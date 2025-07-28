@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable prettier/prettier */
@@ -10,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from '../auth/auth.service';
+import { MailerService } from '../mailer/mailer.service';
 import { CreateParcelDto } from './dto/create-parcel.dto';
 import { generateUniqueTrackingId } from './utils/tracking-id';
 import { calculateParcelPrice } from './utils/price-calculator';
@@ -19,9 +21,16 @@ import { geocodeLocationWithFallback } from 'src/common/utils/geocode';
 
 @Injectable()
 export class ParcelService {
+  sendManualDeliveryNotification(parcelId: string) {
+    throw new Error('Method not implemented.');
+  }
+  sendManualLocationNotification(parcelId: string, location: string, message: string | undefined) {
+    throw new Error('Method not implemented.');
+  }
   constructor(
-    private prisma: PrismaService,
-    private authService: AuthService,
+    private readonly prisma: PrismaService,
+    private readonly authService: AuthService,
+    private readonly mailerService: MailerService,
   ) {}
 
   async createParcel(dto: CreateParcelDto) {
@@ -47,7 +56,7 @@ export class ParcelService {
     const trackingId = await generateUniqueTrackingId(this.prisma);
     const distance = await this.getDistanceInKm(dto.from, dto.to);
     const price = calculateParcelPrice(dto.type, dto.weight, distance, dto.mode);
-    console.log('Calculated price for parcel:', { trackingId, price, type: dto.type, weight: dto.weight, distance, mode: dto.mode }); // Debug log
+    console.log('Calculated price for parcel:', { trackingId, price, type: dto.type, weight: dto.weight, distance, mode: dto.mode });
 
     const destinationCoords = await geocodeLocationWithFallback(dto.to);
     const fromCoords = await geocodeLocationWithFallback(dto.from);
@@ -177,58 +186,73 @@ export class ParcelService {
   }
 
   async assignDriver(parcelId: string, driverId: number) {
-    const parcel = await this.prisma.parcel.findUnique({ where: { id: parcelId } });
+    try {
+      // Get the parcel details before assignment
+      const parcel = await this.prisma.parcel.findUnique({
+        where: { id: parcelId },
+      });
 
-    if (!parcel) {
-      throw new NotFoundException('Parcel not found');
+      if (!parcel) {
+        throw new BadRequestException('Parcel not found');
+      }
+
+      // Get driver details
+      const driver = await this.prisma.driver.findUnique({
+        where: { id: driverId },
+      });
+
+      if (!driver) {
+        throw new BadRequestException('Driver not found');
+      }
+
+      if (!driver.canReceiveAssignments) {
+        throw new BadRequestException('Driver is not available for assignments');
+      }
+
+      // Update parcel with driver assignment
+      const updatedParcel = await this.prisma.parcel.update({
+        where: { id: parcelId },
+        data: {
+          driverId,
+          status: ParcelStatus.ASSIGNED,
+          updatedAt: new Date(),
+        },
+        include: {
+          driver: true,
+        },
+      });
+
+      // Create status log
+      await this.prisma.parcelStatusLog.create({
+        data: {
+          parcelId: parcel.id,
+          status: ParcelStatus.ASSIGNED,
+        },
+      });
+
+      // Send assignment email to driver
+      try {
+        await this.mailerService.sendParcelAssignmentNotification(
+          driver.email,
+          driver.name,
+          {
+            trackingNumber: parcel.trackingId,
+            receiverName: parcel.receiverName,
+            senderName: parcel.senderName,
+          }
+        );
+
+        console.log(`✅ Assignment email sent to driver ${driver.name} for parcel ${parcel.trackingId}`);
+      } catch (emailError) {
+        console.error('❌ Failed to send assignment email to driver:', emailError);
+        // Don't throw error to avoid blocking the assignment process
+      }
+
+      return updatedParcel;
+    } catch (error) {
+      console.error('❌ Error assigning driver:', error);
+      throw error;
     }
-
-    if (parcel.status !== ParcelStatus.PENDING) {
-      throw new ConflictException(
-        `Cannot assign driver: parcel is already in status "${parcel.status}"`,
-      );
-    }
-
-    const driver = await this.prisma.driver.findUnique({ where: { id: driverId } });
-
-    if (!driver) {
-      throw new NotFoundException('Driver not found');
-    }
-
-    if (
-      driver.status !== 'AVAILABLE' ||
-      !driver.canReceiveAssignments
-    ) {
-      throw new BadRequestException(
-        'Driver is not available for new assignments',
-      );
-    }
-
-    const updatedParcel = await this.prisma.parcel.update({
-      where: { id: parcelId },
-      data: {
-        driverId,
-        status: ParcelStatus.ASSIGNED,
-        updatedAt: new Date(),
-      },
-    });
-
-    await this.prisma.driver.update({
-      where: { id: driverId },
-      data: {
-        status: 'ON_DELIVERY',
-        canReceiveAssignments: false,
-      },
-    });
-
-    await this.prisma.parcelStatusLog.create({
-      data: {
-        parcelId,
-        status: ParcelStatus.ASSIGNED,
-      },
-    });
-
-    return updatedParcel;
   }
 
   async unassignDriver(parcelId: string) {
@@ -244,8 +268,15 @@ export class ParcelService {
       throw new BadRequestException('Parcel is not assigned to any driver');
     }
 
-    if (parcel.status === ParcelStatus.DELIVERED) {
-      throw new ConflictException('Cannot unassign driver from a delivered parcel');
+    const restrictedStatuses: ParcelStatus[] = [
+      ParcelStatus.PICKED_UP_BY_DRIVER,
+      ParcelStatus.IN_TRANSIT,
+      ParcelStatus.DELIVERED,
+      ParcelStatus.COLLECTED_BY_RECEIVER,
+    ];
+
+    if (restrictedStatuses.includes(parcel.status)) {
+      throw new ConflictException('Cannot unassign driver from a parcel that has been picked up or is in a later status');
     }
 
     const updatedParcel = await this.prisma.parcel.update({
@@ -297,7 +328,7 @@ export class ParcelService {
           receiverName: true,
           status: true,
           updatedAt: true,
-          price: true, // Added for debugging
+          price: true,
         },
       }),
     ]);
@@ -308,7 +339,7 @@ export class ParcelService {
       parcelsInTransit,
       parcelsDelivered,
       recentParcels: recentParcels.map(p => ({ trackingId: p.trackingId, price: p.price, status: p.status })),
-    }); // Debug log
+    });
 
     return {
       totalEarnings: totalEarnings._sum.price ?? 0,

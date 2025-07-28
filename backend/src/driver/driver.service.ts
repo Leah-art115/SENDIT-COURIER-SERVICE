@@ -2,13 +2,19 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailerService } from '../mailer/mailer.service';
 import { geocodeLocationWithFallback } from '../common/utils/geocode';
 import { getDistanceInKm } from '../common/utils/distance';
 import { ParcelStatus, DriverStatus } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class DriverService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailerService: MailerService,
+    private readonly configService: ConfigService,
+  ) {}
 
   async updateLocation(
     driverId: number,
@@ -45,6 +51,7 @@ export class DriverService {
           id: parcelId,
           driverId,
         },
+        include: { driver: true },
       });
 
       if (!parcel) {
@@ -72,7 +79,6 @@ export class DriverService {
         };
       }
 
-      // Check for destination coordinates, geocode 'to' field if missing
       let destinationLat = parcel.destinationLat;
       let destinationLng = parcel.destinationLng;
       if (destinationLat == null || destinationLng == null) {
@@ -86,7 +92,6 @@ export class DriverService {
           destinationLat = destinationCoords.lat;
           destinationLng = destinationCoords.lng;
 
-          // Update parcel with geocoded coordinates
           await this.prisma.parcel.update({
             where: { id: parcelId },
             data: {
@@ -138,6 +143,46 @@ export class DriverService {
         });
 
         console.log(`Parcel ${parcelId} status updated to: ${newStatus}`);
+
+        if (newStatus === ParcelStatus.DELIVERED) {
+          try {
+            await this.mailerService.sendReceiverPickupNotification(
+              parcel.receiverEmail,
+              parcel.receiverName,
+              parcel.trackingId,
+              parcel.to,
+              'Please collect your parcel at the designated pickup location.',
+              parcel.driver?.name,
+            );
+
+            await this.mailerService.sendSenderDeliveryConfirmation(
+              parcel.senderEmail,
+              parcel.senderName,
+              parcel.receiverName,
+              parcel.trackingId,
+              parcel.to,
+              new Date().toLocaleString(),
+            );
+          } catch (error) {
+            console.error('Failed to send delivery notifications:', error);
+            // Log but don't throw to avoid blocking status update
+          }
+        }
+      }
+
+      try {
+        await this.mailerService.sendLocationUpdateNotification(
+          parcel.receiverEmail,
+          parcel.receiverName,
+          parcel.trackingId,
+          cleanLocationName,
+          distance <= 0.3
+            ? 'Arrived at destination'
+            : `Approximately ${distance.toFixed(1)} km from destination`,
+        );
+      } catch (error) {
+        console.error('Failed to send location update notification:', error);
+        // Don't throw to avoid blocking location update
       }
 
       return {
@@ -203,6 +248,7 @@ export class DriverService {
     try {
       const parcelCheck = await this.prisma.parcel.findUnique({
         where: { id: parcelId },
+        include: { driver: true },
       });
 
       console.log('📦 Parcel Found:', parcelCheck);
@@ -243,6 +289,29 @@ export class DriverService {
       console.log(
         `✅ Parcel ${parcelId} marked as picked up by driver ${driverId}`,
       );
+
+      try {
+        const adminEmail =
+          this.configService.get<string>('ADMIN_EMAIL') ||
+          'admin@senditcourier.com';
+        await this.mailerService.sendPickupNotification(
+          parcel.senderEmail,
+          parcel.senderName,
+          parcel.trackingId,
+          parcel.from,
+          parcelCheck.driver?.name,
+        );
+        await this.mailerService.sendPickupNotification(
+          adminEmail,
+          'Admin',
+          parcel.trackingId,
+          parcel.from,
+          parcelCheck.driver?.name,
+        );
+      } catch (error) {
+        console.error('Failed to send pickup notifications:', error);
+        // Log but don't throw to avoid blocking status update
+      }
 
       return parcel;
     } catch (error) {

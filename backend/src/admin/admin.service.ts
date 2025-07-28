@@ -8,6 +8,7 @@ import { DriverStatus, CourierMode } from '@prisma/client';
 
 @Injectable()
 export class AdminService {
+  resendEmails: any;
   constructor(private readonly prisma: PrismaService) {}
 
   // Get all drivers (including deleted ones for admin panel)

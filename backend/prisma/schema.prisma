@@ -8,13 +8,15 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  phone     String
-  password  String
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
+  id               Int       @id @default(autoincrement())
+  name             String
+  email            String    @unique
+  phone            String
+  password         String
+  role             Role      @default(USER)
+  resetToken       String?   // ✅ Add this for password reset
+  resetTokenExpiry DateTime? // ✅ Add this for password reset
+  createdAt        DateTime  @default(now())
 }
 
 model Parcel {
@@ -99,7 +101,7 @@ enum ParcelStatus {
   PENDING
   ASSIGNED // ✅ When admin assigns to driver
   PICKED_UP_BY_DRIVER // ✅ Manually marked by driver
-  IN_TRANSIT // ✅ Based on driver’s live location
+  IN_TRANSIT // ✅ Based on driver's live location
   DELIVERED // ✅ When driver reaches destination
   COLLECTED_BY_RECEIVER // ✅ Manually marked by user
   CANCELLED

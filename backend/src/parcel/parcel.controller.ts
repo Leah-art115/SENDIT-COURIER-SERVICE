@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/require-await */
 import {
   Body,
   Controller,
@@ -64,5 +65,26 @@ export class ParcelController {
   @Roles(Role.ADMIN)
   async getDashboardMetrics() {
     return this.parcelService.getDashboardMetrics();
+  }
+
+  @Post(':id/notify-delivery')
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async manualDeliveryNotification(@Param('id') parcelId: string) {
+    return this.parcelService.sendManualDeliveryNotification(parcelId);
+  }
+
+  @Post(':id/notify-location')
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async manualLocationNotification(
+    @Param('id') parcelId: string,
+    @Body() dto: { location: string; message?: string },
+  ) {
+    return this.parcelService.sendManualLocationNotification(
+      parcelId,
+      dto.location,
+      dto.message,
+    );
   }
 }

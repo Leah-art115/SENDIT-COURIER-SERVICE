@@ -20,7 +20,7 @@ interface Parcel {
   type: 'BOXED_PACKAGE' | 'ENVELOPE' | 'BAG' | 'SUITCASE';
   weight: number;
   mode: 'STANDARD' | 'EXPRESS';
-  price: string; // Updated from price?: number to price: string
+  price: string;
   distance?: number;
   fromLat?: number;
   fromLng?: number;
@@ -72,12 +72,10 @@ export class DriverParcelsComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.loadGoogleMapsScript();
     this.loadParcels();
-    // Start polling every 30 seconds
     this.pollingSubscription = interval(30000).subscribe(() => this.loadParcels());
   }
 
   ngOnDestroy(): void {
-    // Cleanup polling subscription
     if (this.pollingSubscription) {
       this.pollingSubscription.unsubscribe();
     }
@@ -88,7 +86,7 @@ export class DriverParcelsComponent implements AfterViewInit, OnDestroy {
       next: (parcels) => {
         console.log('Received parcels:', parcels);
         console.log('Number of parcels:', parcels.length);
-        
+
         this.parcels = parcels.map((p: any) => ({
           id: p.id,
           trackingId: p.trackingId,
@@ -102,7 +100,7 @@ export class DriverParcelsComponent implements AfterViewInit, OnDestroy {
           type: p.type,
           weight: p.weight,
           mode: p.mode,
-          price: p.price != null ? `KSh ${p.price.toFixed(2)}` : 'N/A', // Updated
+          price: p.price != null ? `KSh ${p.price.toFixed(2)}` : 'N/A',
           distance: p.distance,
           fromLat: p.fromLat,
           fromLng: p.fromLng,
@@ -114,12 +112,16 @@ export class DriverParcelsComponent implements AfterViewInit, OnDestroy {
           senderEmail: p.senderEmail,
           receiverEmail: p.receiverEmail,
           currentLocation: {
-            lat: p.driver?.currentLat || p.fromLat || 0,
-            lng: p.driver?.currentLng || p.fromLng || 0
+            lat: (p.driver?.currentLat !== null && p.driver?.currentLat !== undefined)
+              ? p.driver.currentLat
+              : p.fromLat || 0,
+            lng: (p.driver?.currentLng !== null && p.driver?.currentLng !== undefined)
+              ? p.driver.currentLng
+              : p.fromLng || 0
           },
           currentLocationInput: '',
         }));
-        
+
         console.log('Mapped parcels:', this.parcels);
       },
       error: (err) => {
@@ -153,7 +155,7 @@ export class DriverParcelsComponent implements AfterViewInit, OnDestroy {
         (!this.filterToDate || new Date(p.dateSent) <= new Date(this.filterToDate));
       return nameMatch && statusMatch && modeMatch && typeMatch && dateMatch;
     });
-    
+
     console.log('Filtered parcels:', filtered);
     console.log('Filter values:', {
       filterName: this.filterName,
@@ -161,7 +163,7 @@ export class DriverParcelsComponent implements AfterViewInit, OnDestroy {
       filterMode: this.filterMode,
       filterType: this.filterType
     });
-    
+
     return filtered;
   }
 
@@ -182,7 +184,7 @@ export class DriverParcelsComponent implements AfterViewInit, OnDestroy {
       this.notification.error('Parcel ID is missing');
       return;
     }
-    
+
     this.driverService.markPickedUp(parcel.id).subscribe({
       next: (response: any) => {
         this.notification.success('Parcel marked as picked up successfully.');
@@ -263,7 +265,6 @@ export class DriverParcelsComponent implements AfterViewInit, OnDestroy {
       lng: parcel.currentLocation?.lng || 0
     };
 
-    // 🟢 Pickup location marker
     new google.maps.Marker({
       position: pickupCoords,
       map,
@@ -271,7 +272,6 @@ export class DriverParcelsComponent implements AfterViewInit, OnDestroy {
       icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
     });
 
-    // 🔴 Destination marker
     new google.maps.Marker({
       position: destinationCoords,
       map,
@@ -279,7 +279,6 @@ export class DriverParcelsComponent implements AfterViewInit, OnDestroy {
       icon: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'
     });
 
-    // 🟡 Current location marker
     new google.maps.Marker({
       position: currentCoords,
       map,
@@ -287,7 +286,6 @@ export class DriverParcelsComponent implements AfterViewInit, OnDestroy {
       icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png'
     });
 
-    // 🛣️ Route: pickup → current → destination
     const routePath = new google.maps.Polyline({
       path: [pickupCoords, currentCoords, destinationCoords],
       geodesic: true,
@@ -307,7 +305,6 @@ export class DriverParcelsComponent implements AfterViewInit, OnDestroy {
       map
     });
 
-    // Fit map bounds to show all points
     const bounds = new google.maps.LatLngBounds();
     bounds.extend(pickupCoords);
     bounds.extend(currentCoords);

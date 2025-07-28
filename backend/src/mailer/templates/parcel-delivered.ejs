@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>New Parcel Assignment</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border-top: 4px solid #f6ad55;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .assignment-icon {
+            width: 64px;
+            height: 64px;
+            background-color: #f6ad55;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .assignment-icon::after {
+            content: '📋';
+            font-size: 28px;
+        }
+        h1 {
+            color: #1a202c;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .tracking-number {
+            background-color: #fef5e7;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #f6ad55;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 16px;
+            text-align: center;
+        }
+        .assignment-details {
+            background-color: #fffaf0;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #fed7aa;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #4a5568;
+            min-width: 140px;
+        }
+        .detail-value {
+            color: #2d3748;
+            text-align: right;
+            max-width: 60%;
+            font-weight: 500;
+        }
+        .priority-badge {
+            background-color: #fed7d7;
+            color: #c53030;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-new {
+            background-color: #c6f6d5;
+            color: #22543d;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #f6ad55, #ed8936);
+            color: #ffffff;
+            padding: 16px 32px;
+            text-decoration: none;
+            border-radius: 8px;
+            margin: 25px 0;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(246, 173, 85, 0.3);
+            font-size: 16px;
+        }
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(246, 173, 85, 0.4);
+        }
+        .instructions {
+            background-color: #e6fffa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #38b2ac;
+            margin: 25px 0;
+        }
+        .footer {
+            font-size: 14px;
+            color: #718096;
+            margin-top: 40px;
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .support-info {
+            background-color: #f0f9ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 25px;
+            border-left: 4px solid #3182ce;
+        }
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .container { padding: 25px; }
+            .detail-row { flex-direction: column; }
+            .detail-value { text-align: left; margin-top: 5px; }
+            .detail-label { min-width: auto; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="assignment-icon"></div>
+        <h1>New Delivery Assignment</h1>
+    </div>
+
+    <p>Hi <%= driverName %>,</p>
+
+    <p>You have been assigned a new parcel for delivery. Please review the details below and confirm pickup when ready. 🚚</p>
+
+    <div class="tracking-number">
+        Tracking Number: <%= trackingNumber %>
+    </div>
+
+    <div class="assignment-details">
+        <div class="detail-row">
+            <span class="detail-label">From (Sender):</span>
+            <span class="detail-value"><%= senderName %></span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">To (Receiver):</span>
+            <span class="detail-value"><%= receiverName %></span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Estimated Delivery:</span>
+            <span class="detail-value"><%= estimatedDelivery %></span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Assignment Status:</span>
+            <span class="detail-value"><span class="status-new">● New Assignment</span></span>
+        </div>
+    </div>
+
+    <div class="instructions">
+        <h3 style="margin-top: 0; color: #2c7a7b;">📋 Next Steps:</h3>
+        <ol style="margin: 0; padding-left: 20px;">
+            <li><strong>Login to your driver portal</strong> to view complete delivery details</li>
+            <li><strong>Confirm parcel pickup</strong> from the origin location</li>
+            <li><strong>Update delivery status</strong> as you progress through the route</li>
+            <li><strong>Complete delivery</strong> and obtain recipient confirmation</li>
+        </ol>
+    </div>
+
+    <div style="text-align: center;">
+        <a href="<%= driverPortalUrl %>" class="button">Access Driver Portal</a>
+    </div>
+
+    <p>Please ensure you have all necessary equipment and documentation before beginning the delivery process. Safe driving!</p>
+
+    <div class="support-info">
+        <strong>Driver Support:</strong><br>
+        For any questions or assistance during delivery, contact our driver support team at
+        <a href="mailto:<%= supportEmail %>" style="color: #3182ce;"><%= supportEmail %></a>
+    </div>
+</div>
+
+<div class="footer">
+    &copy; <%= new Date().getFullYear() %> <%= appName %>. All rights reserved.<br>
+    Driver notification for tracking number <%= trackingNumber %>
+</div>
+</body>
+</html>

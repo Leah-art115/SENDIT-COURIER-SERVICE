@@ -24,7 +24,8 @@
       <ng-template #loggedInBlock>
         <div class="user-info-wrapper">
           <div class="user-info" (click)="goToDashboard()">
-            <i class="fas fa-user user-icon"></i>
+            <i class="fas fa-user-astronaut user-icon"></i>
+
             <span>{{ authService.getUserFirstName() || authService.getUserInitials() }}</span>
           </div>
         </div>

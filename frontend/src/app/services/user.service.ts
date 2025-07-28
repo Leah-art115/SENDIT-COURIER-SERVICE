@@ -47,7 +47,6 @@ export class UserService {
   }
 
   updateProfile(profileData: UpdateProfileData): Observable<UserProfile> {
-    // Changed from /user/profile to /auth/profile
     return this.http.patch<UserProfile>(`${this.baseUrl}/auth/profile`, profileData, {
       headers: this.getAuthHeaders(),
     }).pipe(
@@ -58,11 +57,21 @@ export class UserService {
     );
   }
 
-  changePassword(oldPassword: string, newPassword: string): Observable<any> {
-    // Changed from /user/change-password to /auth/change-password
+  requestPasswordReset(email: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/auth/request-password-reset`, { email }, {
+      headers: this.getAuthHeaders(),
+    }).pipe(
+      catchError(error => {
+        console.error('Error requesting password reset:', error);
+        return throwError(() => new Error(error.message || 'Failed to request password reset'));
+      })
+    );
+  }
+
+  changePassword(otp: string, newPassword: string): Observable<any> {
     return this.http.patch(`${this.baseUrl}/auth/change-password`, {
-      oldPassword,
-      newPassword
+      otp,
+      newPassword,
     }, {
       headers: this.getAuthHeaders(),
     }).pipe(

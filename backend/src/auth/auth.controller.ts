@@ -14,6 +14,8 @@ import {
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Roles } from '../guards/roles/roles.decorator';
 import { RolesGuard } from '../guards/roles/roles.guard';
 import { JwtGuard } from '../guards/jwt/jwt.guard';
@@ -32,6 +34,18 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  // New endpoint: Request password reset
+  @Post('forgot-password')
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto);
+  }
+
+  // New endpoint: Reset password with token
+  @Post('reset-password')
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto);
   }
 
   @Post('create-driver')
@@ -55,7 +69,6 @@ export class AuthController {
     return this.authService.permanentlyDeleteUser(id);
   }
 
-  // New endpoint to get total users count
   @Get('users/count')
   @UseGuards(JwtGuard, RolesGuard)
   @Roles('ADMIN')
@@ -68,8 +81,6 @@ export class AuthController {
   getMe(@GetUser() user: any) {
     return this.authService.getMe(user.id, user.role);
   }
-
-  // Add these endpoints to your AuthController class
 
   @Patch('profile')
   @UseGuards(JwtGuard)

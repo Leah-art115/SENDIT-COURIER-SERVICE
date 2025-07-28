@@ -1,6 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/require-await */
 import {
   Controller,
   Get,
+  Post,
   Patch,
   Delete,
   Body,
@@ -85,5 +89,21 @@ export class AdminController {
   @Delete('driver/:id/permanent')
   async permanentlyDeleteDriver(@Param('id', ParseIntPipe) id: number) {
     return this.adminService.permanentlyDeleteDriver(id);
+  }
+
+  @Post('emails/resend/:parcelId')
+  async resendEmails(
+    @Param('parcelId') parcelId: string,
+    @Body()
+    dto: { emailType: 'pickup' | 'delivery' | 'location' | 'assignment' },
+  ) {
+    return this.adminService.resendEmails(parcelId, dto.emailType);
+  }
+
+  // Get email sending status/logs (if you implement email logging)
+  @Get('emails/logs')
+  async getEmailLogs() {
+    // This would require implementing email logging in your mailer service
+    return { message: 'Email logging not yet implemented' };
   }
 }

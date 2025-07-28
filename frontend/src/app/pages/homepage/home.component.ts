@@ -3,6 +3,9 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { NotificationService } from '../../shared/notification/notification.service';
+import { ParcelService } from '../../services/parcel.service'; // Use your existing ParcelService
+import { catchError, map } from 'rxjs/operators';
+import { throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 // Declare google as a global variable for TypeScript
@@ -21,10 +24,9 @@ interface TrackingResult {
   paymentMethod: string;
   deliveryMode: string;
   expectedDelivery: string;
-  currentLocation: {
-    lat: number;
-    lng: number;
-  };
+  pickupLocation: { lat: number; lng: number };
+  currentLocation: { lat: number; lng: number };
+  destinationLocation: { lat: number; lng: number };
   timeline: {
     status: string;
     date: string;
@@ -47,55 +49,10 @@ export class HomepageComponent implements OnInit, AfterViewInit {
   mapInitialized = false;
   isLoading = false;
 
-  // Mock data for tracking results
-  private mockTrackingData: TrackingResult[] = [
-    {
-      trackingId: 'PKG-1021',
-      receiver: 'Brian Mwangi',
-      from: 'Nairobi',
-      to: 'Kisumu',
-      dateSent: '2025-07-20',
-      status: 'In Transit',
-      description: 'Books and documents',
-      type: 'Box',
-      weight: '2.5 kg',
-      paymentMethod: 'M-Pesa',
-      deliveryMode: 'Express',
-      expectedDelivery: '2025-07-25',
-      currentLocation: { lat: -0.5, lng: 35.5 },
-      timeline: [
-        { status: 'Package Received', date: '2025-07-20 09:00', location: 'Nairobi Hub', completed: true },
-        { status: 'In Transit', date: '2025-07-21 14:30', location: 'Nakuru Station', completed: true },
-        { status: 'Out for Delivery', date: '2025-07-25 08:00', location: 'Kisumu Hub', completed: false },
-        { status: 'Delivered', date: '2025-07-25 16:00', location: 'Kisumu', completed: false }
-      ]
-    },
-    {
-      trackingId: 'PKG-1022',
-      receiver: 'Alice Otieno',
-      from: 'Mombasa',
-      to: 'Nakuru',
-      dateSent: '2025-07-18',
-      status: 'Delivered',
-      description: 'Clothes and accessories',
-      type: 'Bag',
-      weight: '1.2 kg',
-      paymentMethod: 'Card',
-      deliveryMode: 'Standard',
-      expectedDelivery: '2025-07-22',
-      currentLocation: { lat: -0.3031, lng: 36.0800 },
-      timeline: [
-        { status: 'Package Received', date: '2025-07-18 10:00', location: 'Mombasa Hub', completed: true },
-        { status: 'In Transit', date: '2025-07-19 11:00', location: 'Nairobi Hub', completed: true },
-        { status: 'Out for Delivery', date: '2025-07-22 09:00', location: 'Nakuru Hub', completed: true },
-        { status: 'Delivered', date: '2025-07-22 15:30', location: 'Nakuru', completed: true }
-      ]
-    }
-  ];
-
   constructor(
     private notify: NotificationService,
-    private router: Router
+    private router: Router,
+    private parcelService: ParcelService // Use your existing ParcelService
   ) {}
 
   ngOnInit(): void {
@@ -124,6 +81,7 @@ export class HomepageComponent implements OnInit, AfterViewInit {
 
     script.onerror = () => {
       console.error('Failed to load Google Maps script');
+      this.notify.error('Failed to load Google Maps.');
     };
 
     document.head.appendChild(script);
@@ -136,116 +94,291 @@ export class HomepageComponent implements OnInit, AfterViewInit {
     }
 
     this.isLoading = true;
+    
+    console.log('Tracking ID:', this.trackingId.trim());
 
-    // Simulate API call delay
-    setTimeout(() => {
-      const result = this.mockTrackingData.find(
-        item => item.trackingId.toLowerCase() === this.trackingId.toLowerCase()
-      );
-
-      this.isLoading = false;
-
-      if (result) {
-        this.trackingResult = result;
-        this.showTrackingModal = true;
-        
-        // Initialize map after modal is shown
-        setTimeout(() => {
-          if (this.mapInitialized && this.trackingResult) {
-            this.renderGoogleMap(this.trackingResult);
+    // Use your existing ParcelService
+    this.parcelService.getParcelByTrackingId(this.trackingId.trim())
+      .pipe(
+        map(parcel => {
+          console.log('Received parcel data:', parcel);
+          
+          const result: TrackingResult = {
+            trackingId: parcel.trackingId,
+            receiver: parcel.receiverName,
+            from: parcel.from,
+            to: parcel.to,
+            dateSent: new Date(parcel.updatedAt).toISOString().split('T')[0],
+            status: this.formatStatus(parcel.status),
+            description: parcel.description || 'No description available',
+            type: this.formatType(parcel.type),
+            weight: `${parcel.weight || 0} kg`,
+            paymentMethod: 'Not specified', // Add if available in your parcel model
+            deliveryMode: parcel.mode || 'STANDARD',
+            expectedDelivery: parcel.deliveredAt
+              ? new Date(parcel.deliveredAt).toISOString().split('T')[0]
+              : this.calculateExpectedDelivery(parcel.updatedAt, parcel.mode),
+            pickupLocation: this.getPickupLocation(parcel),
+            currentLocation: this.getCurrentLocation(parcel),
+            destinationLocation: this.getDestinationLocation(parcel),
+            timeline: this.createTimeline(parcel)
+          };
+          
+          console.log('Final tracking result:', result);
+          return result;
+        }),
+        catchError((err: any) => {
+          this.isLoading = false;
+          console.error('Tracking error:', err);
+          
+          let errorMessage = `Package with tracking ID "${this.trackingId}" not found. Please verify the tracking number.`;
+          
+          if (err.message?.includes('not found') || err.message?.includes('404')) {
+            errorMessage = `Package with tracking ID "${this.trackingId}" not found. Please verify the tracking number.`;
+          } else if (err.message?.includes('401') || err.message?.includes('Unauthorized')) {
+            errorMessage = 'Authentication required. Please log in to track packages.';
+          } else if (err.message?.includes('network') || err.message?.includes('connection')) {
+            errorMessage = 'Unable to connect to server. Please check your internet connection.';
+          } else if (err.message) {
+            errorMessage = err.message;
           }
-        }, 300);
+          
+          this.notify.error(errorMessage);
+          return throwError(() => err);
+        })
+      )
+      .subscribe({
+        next: (result) => {
+          this.isLoading = false;
+          this.trackingResult = result;
+          this.showTrackingModal = true;
+          
+          // Initialize map after modal is shown
+          setTimeout(() => {
+            if (this.mapInitialized && this.trackingResult) {
+              this.renderGoogleMap(this.trackingResult);
+            } else {
+              console.warn('Map not initialized yet, retrying...');
+              setTimeout(() => {
+                if (this.mapInitialized && this.trackingResult) {
+                  this.renderGoogleMap(this.trackingResult);
+                }
+              }, 1000);
+            }
+          }, 300);
 
-        this.notify.success(`Package found: ${result.trackingId}`);
-      } else {
-        this.notify.error('Package not found. Please check your tracking ID.');
+          this.notify.success(`Package found: ${result.trackingId}`);
+        },
+        error: (err) => {
+          this.isLoading = false;
+          console.error('Final tracking error:', err);
+        }
+      });
+  }
+
+  private getPickupLocation(parcel: any): { lat: number; lng: number } {
+    // Try to get coordinates from parcel data, fallback to city lookup
+    if (parcel.fromLat && parcel.fromLng) {
+      return { lat: parcel.fromLat, lng: parcel.fromLng };
+    }
+    return this.getLatLng(parcel.from);
+  }
+
+  private getCurrentLocation(parcel: any): { lat: number; lng: number } {
+    // If delivered, current location is destination
+    if (parcel.status === 'DELIVERED' || parcel.status === 'COLLECTED_BY_RECEIVER') {
+      return this.getDestinationLocation(parcel);
+    }
+    
+    // If driver has current location, use that
+    if (parcel.driver?.currentLat && parcel.driver?.currentLng) {
+      return {
+        lat: parcel.driver.currentLat,
+        lng: parcel.driver.currentLng
+      };
+    }
+    
+    // Otherwise, use pickup location as default
+    return this.getPickupLocation(parcel);
+  }
+
+  private getDestinationLocation(parcel: any): { lat: number; lng: number } {
+    // Try to get coordinates from parcel data, fallback to city lookup
+    if (parcel.destinationLat && parcel.destinationLng) {
+      return { lat: parcel.destinationLat, lng: parcel.destinationLng };
+    }
+    return this.getLatLng(parcel.to);
+  }
+
+  private formatStatus(status: string): string {
+    const statusMap: Record<string, string> = {
+      'PENDING': 'Package Received',
+      'ASSIGNED': 'Assigned to Driver',
+      'PICKED_UP_BY_DRIVER': 'Picked Up',
+      'IN_TRANSIT': 'In Transit',
+      'DELIVERED': 'Delivered',
+      'COLLECTED_BY_RECEIVER': 'Collected by Receiver',
+      'CANCELLED': 'Cancelled'
+    };
+    return statusMap[status] || status;
+  }
+
+  private formatType(type: string): string {
+    const typeMap: Record<string, string> = {
+      'BOXED_PACKAGE': 'Boxed Package',
+      'ENVELOPE': 'Envelope',
+      'BAG': 'Bag',
+      'SUITCASE': 'Suitcase'
+    };
+    return typeMap[type] || type;
+  }
+
+  private calculateExpectedDelivery(sentDate: string, mode: string): string {
+    const sent = new Date(sentDate);
+    const daysToAdd = mode === 'EXPRESS' ? 1 : 3;
+    const expected = new Date(sent.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
+    return expected.toISOString().split('T')[0];
+  }
+
+  private createTimeline(parcel: any): any[] {
+    const timeline: any[] = [];
+    
+    // Create basic timeline based on current status
+    const statusOrder = ['PENDING', 'ASSIGNED', 'PICKED_UP_BY_DRIVER', 'IN_TRANSIT', 'DELIVERED', 'COLLECTED_BY_RECEIVER'];
+    const currentStatusIndex = statusOrder.indexOf(parcel.status);
+    
+    statusOrder.forEach((status, index) => {
+      if (index <= currentStatusIndex) {
+        let date = parcel.updatedAt;
+        
+        // Use specific dates if available
+        if (status === 'PICKED_UP_BY_DRIVER' && parcel.pickedAt) {
+          date = parcel.pickedAt;
+        } else if (status === 'DELIVERED' && parcel.deliveredAt) {
+          date = parcel.deliveredAt;
+        }
+        
+        timeline.push({
+          status: this.formatStatus(status),
+          date: new Date(date).toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          }),
+          location: this.getStatusLocation(status, parcel),
+          completed: true
+        });
       }
-    }, 1000);
+    });
+    
+    return timeline;
+  }
+
+  private getStatusLocation(status: string, parcel: any): string {
+    if (status === 'DELIVERED' || status === 'COLLECTED_BY_RECEIVER') {
+      return parcel.to;
+    }
+    return parcel.from;
+  }
+
+  // Helper method for city coordinates
+  getLatLng(city: string): { lat: number; lng: number } {
+    const map: Record<string, { lat: number; lng: number }> = {
+      'Nairobi': { lat: -1.2921, lng: 36.8219 },
+      'Kisumu': { lat: 0.0917, lng: 34.768 },
+      'Eldoret': { lat: 0.5143, lng: 35.2698 },
+      'Mombasa': { lat: -4.0435, lng: 39.6682 },
+      'Nakuru': { lat: -0.3031, lng: 36.0800 },
+      'Thika': { lat: -1.0332, lng: 37.0692 },
+      'Chuka': { lat: -0.3334, lng: 37.6501 }
+    };
+    return map[city] || { lat: -1.2921, lng: 36.8219 }; // Default to Nairobi
   }
 
   async renderGoogleMap(trackingData: TrackingResult): Promise<void> {
     try {
-      const destinationCoords = this.getLatLng(trackingData.to);
-      const originCoords = this.getLatLng(trackingData.from);
+      // Check if the map container exists
+      const mapContainer = document.getElementById('tracking-map');
+      if (!mapContainer) {
+        console.error('Map container not found');
+        return;
+      }
 
-      // Import the AdvancedMarkerElement library
+      // Try to use the new Advanced Markers API
       const { AdvancedMarkerElement, PinElement } = await (window as any).google.maps.importLibrary("marker");
 
-      const map = new google.maps.Map(document.getElementById('tracking-map'), {
-        center: trackingData.currentLocation,
+      const map = new google.maps.Map(mapContainer, {
+        center: trackingData.status === 'Delivered' ? trackingData.destinationLocation : trackingData.currentLocation,
         zoom: 7,
         mapId: 'TRACKING_MAP_ID'
       });
 
       // Create custom pins
       const originPin = new PinElement({
-        background: '#6c757d',
-        borderColor: '#495057',
+        background: '#3b82f6',
+        borderColor: '#2563eb',
         glyphColor: '#ffffff',
-        glyph: '📤'
+        glyph: '📦'
       });
 
       const currentLocationPin = new PinElement({
         background: '#22c55e',
         borderColor: '#16a34a',
         glyphColor: '#ffffff',
-        glyph: '🚚'
+        glyph: '🚛'
       });
 
       const destinationPin = new PinElement({
-        background: '#800020',
-        borderColor: '#600018',
+        background: '#ef4444',
+        borderColor: '#dc2626',
         glyphColor: '#ffffff',
         glyph: '🎯'
       });
 
-      // Origin marker
+      // Add markers
       new AdvancedMarkerElement({
-        position: originCoords,
+        position: trackingData.pickupLocation,
         map,
         title: `Origin: ${trackingData.from}`,
         content: originPin.element
       });
 
-      // Current location marker
-      new AdvancedMarkerElement({
-        position: trackingData.currentLocation,
-        map,
-        title: 'Current Location',
-        content: currentLocationPin.element
-      });
+      // Only show current location marker if not delivered
+      if (trackingData.status !== 'Delivered') {
+        new AdvancedMarkerElement({
+          position: trackingData.currentLocation,
+          map,
+          title: 'Current Location',
+          content: currentLocationPin.element
+        });
+      }
 
-      // Destination marker
       new AdvancedMarkerElement({
-        position: destinationCoords,
+        position: trackingData.destinationLocation,
         map,
         title: `Destination: ${trackingData.to}`,
         content: destinationPin.element
       });
 
-      // Route line from origin to current location (completed)
+      // Create route path
+      const path = trackingData.status === 'Delivered' ? 
+        [trackingData.pickupLocation, trackingData.destinationLocation] : 
+        [trackingData.pickupLocation, trackingData.currentLocation, trackingData.destinationLocation];
+
       new google.maps.Polyline({
-        path: [originCoords, trackingData.currentLocation],
+        path,
         geodesic: true,
-        strokeColor: '#22c55e',
+        strokeColor: '#4285F4',
         strokeOpacity: 0.9,
         strokeWeight: 4,
-        map
-      });
-
-      // Route line from current location to destination (remaining)
-      new google.maps.Polyline({
-        path: [trackingData.currentLocation, destinationCoords],
-        geodesic: true,
-        strokeColor: '#800020',
-        strokeOpacity: 0.6,
-        strokeWeight: 3,
         icons: [{
           icon: {
             path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
             scale: 3,
-            strokeColor: '#800020',
-            fillColor: '#800020',
+            strokeColor: '#4285F4',
+            fillColor: '#4285F4',
             fillOpacity: 1
           },
           offset: '50%'
@@ -253,56 +386,60 @@ export class HomepageComponent implements OnInit, AfterViewInit {
         map
       });
 
-      // Fit bounds around all markers
+      // Fit map to show all markers
       const bounds = new google.maps.LatLngBounds();
-      bounds.extend(originCoords);
-      bounds.extend(trackingData.currentLocation);
-      bounds.extend(destinationCoords);
-      map.fitBounds(bounds);
-
-      const padding = { top: 50, right: 50, bottom: 50, left: 50 };
-      map.fitBounds(bounds, padding);
+      bounds.extend(trackingData.pickupLocation);
+      if (trackingData.status !== 'Delivered') {
+        bounds.extend(trackingData.currentLocation);
+      }
+      bounds.extend(trackingData.destinationLocation);
+      map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
 
     } catch (error) {
-      console.error('Error rendering Google Map:', error);
+      console.error('Error with Advanced Markers, falling back to legacy markers:', error);
       this.renderLegacyGoogleMap(trackingData);
     }
   }
 
   renderLegacyGoogleMap(trackingData: TrackingResult): void {
-    const destinationCoords = this.getLatLng(trackingData.to);
-    const originCoords = this.getLatLng(trackingData.from);
+    const mapContainer = document.getElementById('tracking-map');
+    if (!mapContainer) {
+      console.error('Map container not found');
+      return;
+    }
 
-    const map = new google.maps.Map(document.getElementById('tracking-map'), {
-      center: trackingData.currentLocation,
+    const map = new google.maps.Map(mapContainer, {
+      center: trackingData.status === 'Delivered' ? trackingData.destinationLocation : trackingData.currentLocation,
       zoom: 7
     });
 
-    // Origin marker (gray)
+    // Origin marker
     new google.maps.Marker({
-      position: originCoords,
+      position: trackingData.pickupLocation,
       map,
       title: `Origin: ${trackingData.from}`,
       icon: {
-        url: 'http://maps.google.com/mapfiles/ms/icons/grey-dot.png',
+        url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
         scaledSize: new google.maps.Size(32, 32)
       }
     });
 
-    // Current location marker (green)
-    new google.maps.Marker({
-      position: trackingData.currentLocation,
-      map,
-      title: 'Current Location',
-      icon: {
-        url: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
-        scaledSize: new google.maps.Size(32, 32)
-      }
-    });
+    // Current location marker (only if not delivered)
+    if (trackingData.status !== 'Delivered') {
+      new google.maps.Marker({
+        position: trackingData.currentLocation,
+        map,
+        title: 'Current Location',
+        icon: {
+          url: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
+          scaledSize: new google.maps.Size(32, 32)
+        }
+      });
+    }
 
-    // Destination marker (red)
+    // Destination marker
     new google.maps.Marker({
-      position: destinationCoords,
+      position: trackingData.destinationLocation,
       map,
       title: `Destination: ${trackingData.to}`,
       icon: {
@@ -311,30 +448,38 @@ export class HomepageComponent implements OnInit, AfterViewInit {
       }
     });
 
-    // Route lines
+    // Route path
+    const path = trackingData.status === 'Delivered' ? 
+      [trackingData.pickupLocation, trackingData.destinationLocation] : 
+      [trackingData.pickupLocation, trackingData.currentLocation, trackingData.destinationLocation];
+
     new google.maps.Polyline({
-      path: [originCoords, trackingData.currentLocation],
+      path,
       geodesic: true,
-      strokeColor: '#22c55e',
+      strokeColor: '#4285F4',
       strokeOpacity: 0.9,
       strokeWeight: 4,
+      icons: [{
+        icon: {
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 3,
+          strokeColor: '#4285F4',
+          fillColor: '#4285F4',
+          fillOpacity: 1
+        },
+        offset: '50%'
+      }],
       map
     });
 
-    new google.maps.Polyline({
-      path: [trackingData.currentLocation, destinationCoords],
-      geodesic: true,
-      strokeColor: '#800020',
-      strokeOpacity: 0.6,
-      strokeWeight: 3,
-      map
-    });
-
+    // Fit bounds
     const bounds = new google.maps.LatLngBounds();
-    bounds.extend(originCoords);
-    bounds.extend(trackingData.currentLocation);
-    bounds.extend(destinationCoords);
-    map.fitBounds(bounds);
+    bounds.extend(trackingData.pickupLocation);
+    if (trackingData.status !== 'Delivered') {
+      bounds.extend(trackingData.currentLocation);
+    }
+    bounds.extend(trackingData.destinationLocation);
+    map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
   }
 
   closeTrackingModal(): void {
@@ -343,25 +488,15 @@ export class HomepageComponent implements OnInit, AfterViewInit {
     this.trackingId = '';
   }
 
-  getLatLng(city: string): { lat: number; lng: number } {
-    const map: Record<string, { lat: number; lng: number }> = {
-      Nairobi: { lat: -1.2921, lng: 36.8219 },
-      Kisumu: { lat: 0.0917, lng: 34.7680 },
-      Mombasa: { lat: -4.0435, lng: 39.6682 },
-      Nakuru: { lat: -0.3031, lng: 36.0800 },
-      Eldoret: { lat: 0.5143, lng: 35.2699 },
-      Thika: { lat: -1.0332, lng: 37.0692 }
-    };
-    return map[city] || { lat: -1.2921, lng: 36.8219 }; // Default to Nairobi
-  }
-
   getStatusColor(status: string): string {
     switch (status.toLowerCase()) {
       case 'delivered': return '#22c55e';
       case 'in transit': return '#f59e0b';
-      case 'out for delivery': return '#3b82f6';
+      case 'picked up': return '#3b82f6';
       case 'package received': return '#6c757d';
-      default: return '#800020';
+      case 'assigned to driver': return '#8b5cf6';
+      case 'cancelled': return '#ef4444';
+      default: return '#64748b';
     }
   }
 

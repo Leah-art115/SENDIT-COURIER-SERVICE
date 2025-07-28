@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Parcel Picked Up</title>
+</head>
+<body style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa; color: #000000;">
+<div style="background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,249,250,0.98) 100%); padding: 30px; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(128, 0, 32, 0.2); border: 1px solid rgba(128, 0, 32, 0.3);">
+    <div style="text-align: center; margin-bottom: 20px;">
+        <h1 style="color: #800020; font-size: 24px; font-weight: bold; margin: 0;">Package Picked Up!</h1>
+    </div>
+
+    <p style="color: #000000; font-size: 16px; line-height: 1.5; margin-bottom: 15px;">Hi <%= name %>,</p>
+
+    <p style="color: #000000; font-size: 16px; line-height: 1.5; margin-bottom: 15px;">Great news! Your package has been picked up and is now on its way to the destination. 📦🚚</p>
+
+    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; border: 1px solid rgba(128, 0, 32, 0.3); margin: 20px 0; font-family: 'Courier New', monospace; font-weight: bold; font-size: 16px; text-align: center; color: #800020;">
+        Tracking Number: <%= trackingNumber %>
+    </div>
+
+    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0; border: 1px solid rgba(128, 0, 32, 0.3);">
+        <div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(128, 0, 32, 0.3);">
+            <span style="font-weight: bold; color: #000000; min-width: 140px; display: inline-block;">Pickup Location:</span>
+            <span style="color: #000000;"><%= pickupLocation %></span>
+        </div>
+        <div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(128, 0, 32, 0.3);">
+            <span style="font-weight: bold; color: #000000; min-width: 140px; display: inline-block;">Pickup Time:</span>
+            <span style="color: #000000;"><%= pickupTime %></span>
+        </div>
+        <div>
+            <span style="font-weight: bold; color: #000000; min-width: 140px; display: inline-block;">Status:</span>
+            <span style="color: #000000;"><span style="background-color: #c44569; color: #ffffff; padding: 6px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; text-transform: uppercase;">● In Transit</span></span>
+        </div>
+    </div>
+
+    <% if (driverName && driverPhone) { %>
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #c44569;">
+            <h3 style="margin: 0 0 10px 0; color: #800020; font-size: 18px;">🚚 Your Driver</h3>
+            <p style="color: #000000; font-size: 16px; line-height: 1.5; margin: 0 0 10px 0;"><strong>Driver:</strong> <%= driverName %></p>
+            <p style="color: #000000; font-size: 16px; line-height: 1.5; margin: 0;"><strong>Contact:</strong> <a href="tel:<%= driverPhone %>" style="color: #c44569;"><%= driverPhone %></a></p>
+        </div>
+    <% } %>
+
+    <p style="color: #000000; font-size: 16px; line-height: 1.5; margin-bottom: 15px;">Your package is now in safe hands and on its way to the delivery address. We'll keep you updated with real-time tracking information as it progresses.</p>
+
+    <div style="text-align: center;">
+        <a href="<%= trackingUrl %>" style="display: inline-block; background: linear-gradient(135deg, #800020 0%, #a00028 100%); color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px; font-weight: bold; font-size: 16px; border: 1px solid rgba(128, 0, 32, 0.3); box-shadow: 0 4px 6px -1px rgba(128, 0, 32, 0.15); transition: background 0.3s ease;">Track Your Package</a>
+    </div>
+
+    <p style="color: #000000; font-size: 16px; line-height: 1.5; margin-top: 20px; margin-bottom: 15px;">Thank you for choosing <%= appName %>. We're committed to delivering your package safely and on time!</p>
+
+    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; border-left: 4px solid #c44569;">
+        <strong style="color: #000000;">Need Help?</strong><br>
+        If you have any questions about your shipment, contact our support team at
+        <a href="mailto:<%= supportEmail %>" style="color: #c44569;"><%= supportEmail %></a>
+    </div>
+</div>
+
+<div style="font-size: 12px; color: #6c757d; margin-top: 30px; text-align: center;">
+    &copy; <%= new Date().getFullYear() %> <%= appName %>. All rights reserved.<br>
+    This email was sent regarding tracking number <%= trackingNumber %>
+</div>
+</body>
+</html>

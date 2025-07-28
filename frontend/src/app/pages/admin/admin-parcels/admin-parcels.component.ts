@@ -5,29 +5,27 @@ import { NotificationService } from '../../../shared/notification/notification.s
 import { environment } from '../../../../environments/environment';
 import { AdminParcelService } from '../../../services/admin-parcel.service';
 
-interface LatLng {
-  lat: number;
-  lng: number;
-}
+interface LatLng { lat: number; lng: number; }
 
-interface Driver {
-  id: string;
-  name: string;
-}
+interface Driver { id: string; name: string; }
 
 interface Parcel {
   id: string;
   trackingId: string;
   senderName: string;
   receiverName: string;
+  senderEmail: string;
+  receiverEmail: string;
   status: string;
   from: string;
   to: string;
   mode: string;
   type: string;
   weight: string;
+  price: string;
   description: string;
   dateSent: string;
+  pickupLocation: LatLng;
   currentLocation: LatLng;
   destinationLocation: LatLng;
   assignedDriver?: Driver | null;
@@ -43,7 +41,8 @@ declare const google: any;
   styleUrls: ['./admin-parcels.component.css'],
 })
 export class AdminParcelsComponent implements AfterViewInit {
-  filterName = '';
+  filterPerson = '';
+  filterLocation = '';
   filterDateFrom = '';
   filterDateTo = '';
   filterStatus = '';
@@ -88,21 +87,28 @@ export class AdminParcelsComponent implements AfterViewInit {
           trackingId: p.trackingId,
           senderName: p.senderName,
           receiverName: p.receiverName,
+          senderEmail: p.senderEmail || '',
+          receiverEmail: p.receiverEmail || '',
           status: p.status,
           from: p.from,
           to: p.to,
           mode: p.mode,
           type: p.type,
           weight: p.weight.toString(),
+          price: p.price.toString(),
           description: p.description || '',
           dateSent: p.sentAt,
+          pickupLocation: {
+            lat: p.fromLat,
+            lng: p.fromLng
+          },
           currentLocation: {
-            lat: p.driver?.currentLat ?? p.fromLat,
-            lng: p.driver?.currentLng ?? p.fromLng,
+            lat: p.status === 'DELIVERED' ? p.destinationLat : (p.driver?.currentLat ?? p.fromLat),
+            lng: p.status === 'DELIVERED' ? p.destinationLng : (p.driver?.currentLng ?? p.fromLng),
           },
           destinationLocation: {
-            lat: p.toLat,
-            lng: p.toLng,
+            lat: p.destinationLat,
+            lng: p.destinationLng,
           },
           assignedDriver: p.driver
             ? { id: p.driver.id.toString(), name: p.driver.name }
@@ -160,11 +166,7 @@ export class AdminParcelsComponent implements AfterViewInit {
       next: (updated) => {
         this.parcels = this.parcels.map((p) =>
           p.id === this.parcelToUnassign!.id
-            ? {
-                ...p,
-                status: updated.status,
-                assignedDriver: null,
-              }
+            ? { ...p, status: updated.status, assignedDriver: null }
             : p
         );
         this.notificationService.success('Driver unassigned successfully.');
@@ -189,7 +191,7 @@ export class AdminParcelsComponent implements AfterViewInit {
       return;
     }
 
-    if (!this.isValidLatLng(parcel.currentLocation) || !this.isValidLatLng(parcel.destinationLocation)) {
+    if (!this.isValidLatLng(parcel.pickupLocation) || !this.isValidLatLng(parcel.currentLocation) || !this.isValidLatLng(parcel.destinationLocation)) {
       this.notificationService.error('Invalid location data for this parcel.');
       return;
     }
@@ -209,32 +211,40 @@ export class AdminParcelsComponent implements AfterViewInit {
 
   renderGoogleMap(parcel: Parcel): void {
     try {
+      const pickupCoords = parcel.pickupLocation;
+      const currentCoords = parcel.currentLocation;
       const destinationCoords = parcel.destinationLocation;
 
-      if (!this.isValidLatLng(parcel.currentLocation) || !this.isValidLatLng(destinationCoords)) {
-        throw new Error('Invalid coordinates for map rendering.');
-      }
-
       const map = new google.maps.Map(document.getElementById('google-map'), {
-        center: parcel.currentLocation,
+        center: parcel.status === 'DELIVERED' ? destinationCoords : currentCoords,
         zoom: 7,
-        mapId: 'DEMO_MAP_ID',
       });
 
-      new google.maps.marker.AdvancedMarkerElement({
-        position: parcel.currentLocation,
+      new google.maps.Marker({
+        position: pickupCoords,
+        map,
+        title: 'Pickup Location',
+        icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+      });
+
+      new google.maps.Marker({
+        position: currentCoords,
         map,
         title: 'Current Location',
+        icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
       });
 
-      new google.maps.marker.AdvancedMarkerElement({
+      new google.maps.Marker({
         position: destinationCoords,
         map,
         title: 'Destination',
+        icon: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
       });
 
+      const path = parcel.status === 'DELIVERED' ? [pickupCoords, destinationCoords] : [pickupCoords, currentCoords, destinationCoords];
+
       new google.maps.Polyline({
-        path: [parcel.currentLocation, destinationCoords],
+        path,
         geodesic: true,
         strokeColor: '#4285F4',
         strokeOpacity: 0.9,
@@ -253,7 +263,10 @@ export class AdminParcelsComponent implements AfterViewInit {
       });
 
       const bounds = new google.maps.LatLngBounds();
-      bounds.extend(parcel.currentLocation);
+      bounds.extend(pickupCoords);
+      if (parcel.status !== 'DELIVERED') {
+        bounds.extend(currentCoords);
+      }
       bounds.extend(destinationCoords);
       map.fitBounds(bounds);
     } catch (error) {
@@ -284,22 +297,43 @@ export class AdminParcelsComponent implements AfterViewInit {
     this.showInfoModal = true;
   }
 
+  formatDate(date: string): string {
+    const d = new Date(date);
+    return d.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+  }
+
+  canUnassign(status: string): boolean {
+    const restrictedStatuses = ['PICKED_UP_BY_DRIVER', 'IN_TRANSIT', 'DELIVERED', 'PICKED_BY_CUSTOMER', 'COMPLETE'];
+    return !restrictedStatuses.includes(status.toUpperCase());
+  }
+
   get availableDrivers(): Driver[] {
     return this.drivers;
   }
 
   get filteredParcels(): Parcel[] {
     return this.parcels.filter((p) => {
-      const nameMatch =
-        !this.filterName || p.senderName.toLowerCase().includes(this.filterName.toLowerCase());
+      const personMatch = !this.filterPerson ||
+        p.senderName.toLowerCase().includes(this.filterPerson.toLowerCase()) ||
+        p.receiverName.toLowerCase().includes(this.filterPerson.toLowerCase());
+      const locationMatch = !this.filterLocation ||
+        p.from.toLowerCase().includes(this.filterLocation.toLowerCase()) ||
+        p.to.toLowerCase().includes(this.filterLocation.toLowerCase());
       const statusMatch = !this.filterStatus || p.status === this.filterStatus;
       const modeMatch = !this.filterMode || p.mode === this.filterMode;
-      const typeMatch =
-        !this.filterType || p.type.toLowerCase().includes(this.filterType.toLowerCase());
+      const typeMatch = !this.filterType || p.type.toLowerCase().includes(this.filterType.toLowerCase());
       const dateMatch =
         (!this.filterDateFrom || new Date(p.dateSent) >= new Date(this.filterDateFrom)) &&
         (!this.filterDateTo || new Date(p.dateSent) <= new Date(this.filterDateTo));
-      return nameMatch && statusMatch && modeMatch && typeMatch && dateMatch;
+      return personMatch && locationMatch && statusMatch && modeMatch && typeMatch && dateMatch;
     });
   }
 

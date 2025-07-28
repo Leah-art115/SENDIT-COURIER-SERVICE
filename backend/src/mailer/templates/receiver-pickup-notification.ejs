@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Parcel Ready for Pickup</title>
+</head>
+<body style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa; color: #000000;">
+<div style="background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,249,250,0.98) 100%); padding: 30px; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(128, 0, 32, 0.2); border: 1px solid rgba(128, 0, 32, 0.3);">
+    <h2 style="color: #800020; font-size: 24px; margin-bottom: 20px;">Your Parcel is Ready for Pickup!</h2>
+
+    <p style="color: #000000; font-size: 16px; line-height: 1.5; margin-bottom: 15px;">Hi <%= name %>,</p>
+
+    <p style="color: #000000; font-size: 16px; line-height: 1.5; margin-bottom: 15px;">Great news! Your parcel is ready for pickup. Please review the details below and collect your package at your earliest convenience.</p>
+
+    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; border: 1px solid rgba(128, 0, 32, 0.3); margin: 20px 0; font-family: 'Courier New', monospace; font-weight: bold; font-size: 16px; text-align: center; color: #800020;">
+        Tracking Number: <%= trackingNumber %>
+    </div>
+
+    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0; border: 1px solid rgba(128, 0, 32, 0.3);">
+        <div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(128, 0, 32, 0.3);">
+            <span style="font-weight: bold; color: #000000; min-width: 140px; display: inline-block;">Pickup Location:</span>
+            <span style="color: #000000;"><%= pickupLocation %></span>
+        </div>
+        <div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(128, 0, 32, 0.3);">
+            <span style="font-weight: bold; color: #000000; min-width: 140px; display: inline-block;">Arrival Time:</span>
+            <span style="color: #000000;"><%= arrivalTime %></span>
+        </div>
+        <% if (pickupInstructions) { %>
+            <div>
+                <span style="font-weight: bold; color: #000000; min-width: 140px; display: inline-block;">Instructions:</span>
+                <span style="color: #000000;"><%= pickupInstructions %></span>
+            </div>
+        <% } %>
+    </div>
+
+    <% if (driverName && driverPhone) { %>
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #c44569;">
+            <h3 style="margin: 0 0 10px 0; color: #800020; font-size: 18px;">🚚 Your Driver</h3>
+            <p style="color: #000000; font-size: 16px; line-height: 1.5; margin: 0 0 10px 0;"><strong>Driver:</strong> <%= driverName %></p>
+            <p style="color: #000000; font-size: 16px; line-height: 1.5; margin: 0;"><strong>Contact:</strong> <a href="tel:<%= driverPhone %>" style="color: #c44569;"><%= driverPhone %></a></p>
+        </div>
+    <% } %>
+
+    <p style="color: #000000; font-size: 16px; line-height: 1.5; margin-bottom: 15px;">Your parcel is waiting for you! Track its status or contact support if you need assistance.</p>
+
+    <div style="text-align: center;">
+        <a href="<%= trackingUrl %>" style="display: inline-block; background: linear-gradient(135deg, #800020 0%, #a00028 100%); color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px; font-weight: bold; font-size: 16px; border: 1px solid rgba(128, 0, 32, 0.3); box-shadow: 0 4px 6px -1px rgba(128, 0, 32, 0.15); transition: background 0.3s ease;">Track Your Package</a>
+    </div>
+
+    <p style="color: #000000; font-size: 16px; line-height: 1.5; margin-top: 20px; margin-bottom: 15px;">Thank you for choosing SendItCourier. We’re here to ensure a smooth pickup experience!</p>
+
+    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; border-left: 4px solid #c44569;">
+        <strong style="color: #000000;">Need Help?</strong><br>
+        Contact our support team at <a href="mailto:<%= supportEmail %>" style="color: #c44569;"><%= supportEmail %></a> if you need assistance.
+    </div>
+</div>
+
+<div style="font-size: 12px; color: #6c757d; margin-top: 30px; text-align: center;">
+    &copy; <%= new Date().getFullYear() %> SendItCourier. All rights reserved.<br>
+    This email was sent regarding tracking number <%= trackingNumber %>
+</div>
+</body>
+</html>

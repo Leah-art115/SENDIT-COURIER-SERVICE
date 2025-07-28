@@ -32,9 +32,15 @@ export class AuthService {
 
         console.log('User logged in with role:', response.user.role);
 
-        // Always redirect to home page after successful login
-        console.log('Redirecting to home page after successful login');
-        this.router.navigate(['/']);
+        // Redirect based on role
+        const role = response.user.role;
+        if (role === 'ADMIN') {
+          this.router.navigate(['/admin']);
+        } else if (role === 'DRIVER') {
+          this.router.navigate(['/driver']);
+        } else {
+          this.router.navigate(['/user']);
+        }
       }),
       map(() => true),
       catchError((error) => {
@@ -90,4 +96,21 @@ export class AuthService {
   isUser(): boolean {
     return this.getCurrentUser()?.role === 'USER';
   }
+
+  getProfile(): Observable<User> {
+  return this.http.get<User>(`${this.BASE_URL}/me`).pipe(
+    tap(user => {
+      // Update localStorage with fresh user data
+      localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    }),
+    catchError((error) => {
+      console.error('Error fetching user profile:', error);
+      // If token is invalid, logout user
+      if (error.status === 401 || error.status === 403) {
+        this.logout();
+      }
+      throw error;
+    })
+  );
+}
 }

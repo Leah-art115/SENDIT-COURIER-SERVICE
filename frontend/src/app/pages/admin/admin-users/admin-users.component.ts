@@ -1,14 +1,15 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NotificationService } from '../../../shared/notification/notification.service'; 
+import { NotificationService } from '../../../shared/notification/notification.service';
+import { AdminService } from '../../../services/admin.service';
 
 interface User {
   id: number;
   name: string;
   email: string;
-  role: 'User' | 'Admin' | string;
-  status: 'Active' | 'Suspended' | string;
+  role: 'USER' | 'ADMIN' | string;
+  status: 'Active' | string;
   createdAt: string;
 }
 
@@ -19,37 +20,36 @@ interface User {
   templateUrl: './admin-users.component.html',
   styleUrls: ['./admin-users.component.css']
 })
-export class AdminUsersComponent {
+export class AdminUsersComponent implements OnInit {
   searchTerm = '';
+  users: User[] = [];
 
-  constructor(private notificationService: NotificationService) {} 
+  constructor(
+    private notificationService: NotificationService,
+    private adminService: AdminService
+  ) {}
 
-  users: User[] = [
-    {
-      id: 1,
-      name: 'Leah Achieng',
-      email: 'leah@example.com',
-      role: 'User',
-      status: 'Active',
-      createdAt: '2025-06-30'
-    },
-    {
-      id: 2,
-      name: 'John Doe',
-      email: 'john@example.com',
-      role: 'User',
-      status: 'Active',
-      createdAt: '2025-07-01'
-    },
-    {
-      id: 3,
-      name: 'Grace Mwangi',
-      email: 'grace@example.com',
-      role: 'User',
-      status: 'Suspended',
-      createdAt: '2025-07-02'
-    }
-  ];
+  ngOnInit(): void {
+    this.loadUsers();
+  }
+
+  loadUsers(): void {
+    this.adminService.getAllUsers().subscribe({
+      next: (users) => {
+        this.users = users.map(user => ({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          status: 'Active', // No deletedAt in schema, all users are Active
+          createdAt: new Date(user.createdAt).toISOString()
+        }));
+      },
+      error: (error) => {
+        this.notificationService.error('Failed to load users: ' + error.message);
+      }
+    });
+  }
 
   get filteredUsers(): User[] {
     return this.users.filter(u =>
@@ -58,11 +58,18 @@ export class AdminUsersComponent {
     );
   }
 
-  deleteUser(userId: number): void {
-    this.notificationService.confirm('Are you sure you want to delete this user?', result => {
+  permanentlyDeleteUser(userId: number): void {
+    this.notificationService.confirm('Are you sure you want to permanently delete this user?', result => {
       if (result === 'yes') {
-        this.users = this.users.filter(u => u.id !== userId);
-        this.notificationService.success('User deleted successfully.');
+        this.adminService.permanentlyDeleteUser(userId).subscribe({
+          next: () => {
+            this.users = this.users.filter(u => u.id !== userId);
+            this.notificationService.success('User permanently deleted successfully.');
+          },
+          error: (error) => {
+            this.notificationService.error('Failed to delete user: ' + error.message);
+          }
+        });
       }
     });
   }

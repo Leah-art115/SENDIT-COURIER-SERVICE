@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Parcel" ADD COLUMN     "fromLat" DOUBLE PRECISION,
+ADD COLUMN     "fromLng" DOUBLE PRECISION;

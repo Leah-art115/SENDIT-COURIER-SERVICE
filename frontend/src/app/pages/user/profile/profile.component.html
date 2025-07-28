@@ -3,11 +3,23 @@
 <div class="profile-page">
   <div class="profile-card">
     <div class="profile-picture">
-  <img [src]="user.profilePicture" alt="Profile Picture" (click)="fileInput.click()" />
-  <i class="fas fa-camera" (click)="fileInput.click()"></i>
-  <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" hidden />
-</div>
-
+      <!-- Show profile image if exists -->
+      <div *ngIf="user.profilePicture; else noImage" class="image-container">
+        <img [src]="user.profilePicture" alt="Profile Picture" (click)="fileInput.click()" />
+        <i class="fas fa-camera camera-icon" (click)="fileInput.click()"></i>
+        <i class="fas fa-times remove-icon" (click)="removeProfilePicture()" title="Remove picture"></i>
+      </div>
+      
+      <!-- Show empty state if no image -->
+      <ng-template #noImage>
+        <div class="empty-profile-picture" (click)="fileInput.click()">
+          <i class="fas fa-user-plus add-photo-icon"></i>
+          <span>Add Photo</span>
+        </div>
+      </ng-template>
+      
+      <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" hidden />
+    </div>
 
     <div class="profile-info">
       <h2>{{ user.fullName }}</h2>

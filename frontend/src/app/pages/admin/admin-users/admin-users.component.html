@@ -22,9 +22,9 @@
         <td>{{ user.email }}</td>
         <!-- <td>{{ user.role }}</td> -->
         <td>{{ user.status }}</td>
-        <td>{{ user.createdAt }}</td>
+        <td>{{ user.createdAt | date: 'yyyy-MM-dd' }}</td>
         <td>
-          <button class="delete-btn" (click)="deleteUser(user.id)">Delete</button>
+          <button class="delete-btn" (click)="permanentlyDeleteUser(user.id)">Delete</button>
         </td>
       </tr>
     </tbody>

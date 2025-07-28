@@ -3,22 +3,22 @@
 <div class="dashboard-cards">
   <div class="card">
     <h3>Total Earnings</h3>
-    <p>KES {{ totalEarnings | number }}</p>
+    <p>KES {{ metrics?.totalEarnings | number }}</p>
   </div>
 
   <div class="card">
     <h3>Total Users</h3>
-    <p>{{ totalUsers }}</p>
+    <p>{{ metrics?.totalUsers }}</p>
   </div>
 
   <div class="card">
     <h3>In Transit</h3>
-    <p>{{ parcelsInTransit }}</p>
+    <p>{{ metrics?.parcelsInTransit }}</p>
   </div>
 
   <div class="card">
     <h3>Delivered</h3>
-    <p>{{ parcelsDelivered }}</p>
+    <p>{{ metrics?.parcelsDelivered }}</p>
   </div>
 </div>
 
@@ -35,17 +35,17 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let parcel of recentParcels; let i = index" [attr.data-row]="i">
-        <td class="col-parcel-id">{{ parcel.id || 'N/A' }}</td>
-        <td class="col-sender">{{ parcel.sender || 'N/A' }}</td>
-        <td class="col-receiver">{{ parcel.receiver || 'N/A' }}</td>
+      <tr *ngFor="let parcel of metrics?.recentParcels; let i = index" [attr.data-row]="i">
+        <td class="col-parcel-id">{{ parcel.trackingId || 'N/A' }}</td>
+        <td class="col-sender">{{ parcel.senderName || 'N/A' }}</td>
+        <td class="col-receiver">{{ parcel.receiverName || 'N/A' }}</td>
         <td class="col-status">
           <span [ngClass]="{
-            'delivered': parcel.status === 'Delivered',
-            'transit': parcel.status === 'In Transit'
+            'delivered': parcel.status === 'DELIVERED',
+            'transit': parcel.status === 'IN_TRANSIT'
           }">{{ parcel.status || 'N/A' }}</span>
         </td>
-        <td class="col-date">{{ parcel.date || 'N/A' }}</td>
+        <td class="col-date">{{ parcel.updatedAt | date: 'yyyy-MM-dd' }}</td>
       </tr>
     </tbody>
   </table>

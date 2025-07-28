@@ -27,8 +27,10 @@ model Parcel {
   from           String
   to             String
   distance       Float
-  destinationLat Float? // ✅ Latitude of destination
-  destinationLng Float? // ✅ Longitude of destination
+  fromLat        Float?         // ✅ Add this
+  fromLng        Float?         // ✅ Add this
+  destinationLat Float?         // ✅ Already here
+  destinationLng Float?         // ✅ Already here
   type           ParcelType
   weight         Float
   mode           TransportMode
@@ -47,6 +49,7 @@ model Parcel {
 
   statusHistory ParcelStatusLog[]
 }
+
 
 model ParcelStatusLog {
   id        String       @id @default(uuid())

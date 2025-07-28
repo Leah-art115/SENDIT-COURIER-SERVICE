@@ -1,14 +1,15 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NotificationService } from '../../../shared/notification/notification.service';
+import { AdminService } from '../../../services/admin.service';
 
 interface Driver {
-  id: string;
+  id: number;
   name: string;
   email: string;
-  mode: 'Bicycle' | 'Motorcycle' | 'Car' | 'Skates';
-  status: 'Available' | 'On Delivery' | 'Out Sick' | 'On Leave' | 'Suspended';
+  mode: 'BICYCLE' | 'MOTORCYCLE' | 'CAR' | 'SKATES';
+  status: 'AVAILABLE' | 'ON_DELIVERY' | 'OUT_SICK' | 'ON_LEAVE' | 'SUSPENDED';
   canReceiveAssignments: boolean;
   isDeleted: boolean;
   deletedAt?: Date;
@@ -20,7 +21,7 @@ interface StatusChange {
   from: string;
   to: string;
   changedAt: Date;
-  changedBy: string; // admin user
+  changedBy: string;
 }
 
 interface ConfirmAction {
@@ -35,9 +36,9 @@ interface ConfirmAction {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './admin-drivers.component.html',
-  styleUrls: ['./admin-drivers.component.css']
+  styleUrls: ['./admin-drivers.component.css'],
 })
-export class AdminDriversComponent {
+export class AdminDriversComponent implements OnInit {
   search = '';
   statusFilter = '';
   showModal = false;
@@ -46,284 +47,82 @@ export class AdminDriversComponent {
   showStatusModal = false;
   showConfirmModal = false;
   showArchived = false;
-  
+
   selectedDriver: Driver | null = null;
-  selectedDriverIds: string[] = [];
-  tempStatus: Driver['status'] = 'Available';
-  
+  selectedDriverIds: number[] = [];
+  tempStatus: Driver['status'] = 'AVAILABLE';
+
   confirmAction: ConfirmAction = {
     title: '',
     message: '',
     confirmText: '',
-    action: () => {}
+    action: () => {},
+  };
+
+  drivers: Driver[] = [];
+  newDriver: Driver & { password?: string } = {
+    id: 0,
+    name: '',
+    email: '',
+    password: '',
+    mode: 'BICYCLE',
+    status: 'AVAILABLE',
+    canReceiveAssignments: true,
+    isDeleted: false,
+    createdAt: new Date(),
   };
 
   editDriver: Driver = {
-    id: '', 
-    name: '', 
-    email: '', 
-    mode: 'Bicycle', 
-    status: 'Available',
-    canReceiveAssignments: true,
-    isDeleted: false,
-    createdAt: new Date()
-  };
-
-  drivers: Driver[] = [
-    {
-      id: 'D001',
-      name: 'Brian Otieno',
-      email: 'brian@example.com',
-      mode: 'Motorcycle',
-      status: 'Available',
-      canReceiveAssignments: true,
-      isDeleted: false,
-      createdAt: new Date('2024-01-15'),
-      statusHistory: [
-        { from: '', to: 'Available', changedAt: new Date('2024-01-15'), changedBy: 'System' }
-      ]
-    },
-    {
-      id: 'D002',
-      name: 'Faith Wanjiku',
-      email: 'faith@example.com',
-      mode: 'Bicycle',
-      status: 'On Delivery',
-      canReceiveAssignments: false,
-      isDeleted: false,
-      createdAt: new Date('2024-01-20'),
-      statusHistory: [
-        { from: '', to: 'Available', changedAt: new Date('2024-01-20'), changedBy: 'System' },
-        { from: 'Available', to: 'On Delivery', changedAt: new Date(), changedBy: 'System' }
-      ]
-    },
-    {
-      id: 'D003',
-      name: 'Alex Kiptoo',
-      email: 'alex@example.com',
-      mode: 'Car',
-      status: 'On Leave',
-      canReceiveAssignments: false,
-      isDeleted: false,
-      createdAt: new Date('2024-02-01'),
-      statusHistory: [
-        { from: '', to: 'Available', changedAt: new Date('2024-02-01'), changedBy: 'System' },
-        { from: 'Available', to: 'On Leave', changedAt: new Date('2024-07-20'), changedBy: 'Admin' }
-      ]
-    },
-    {
-      id: 'D004',
-      name: 'Jane Achieng',
-      email: 'jane@example.com',
-      mode: 'Skates',
-      status: 'Available',
-      canReceiveAssignments: true,
-      isDeleted: false,
-      createdAt: new Date('2024-03-10')
-    },
-    {
-      id: 'D005',
-      name: 'Samuel Kimani',
-      email: 'samuel@example.com',
-      mode: 'Motorcycle',
-      status: 'Suspended',
-      canReceiveAssignments: false,
-      isDeleted: false,
-      createdAt: new Date('2024-01-25'),
-      statusHistory: [
-        { from: '', to: 'Available', changedAt: new Date('2024-01-25'), changedBy: 'System' },
-        { from: 'Available', to: 'Suspended', changedAt: new Date('2024-07-15'), changedBy: 'Admin' }
-      ]
-    },
-
-    {
-  id: 'D006',
-  name: 'Grace Wanjiku',
-  email: 'grace@example.com',
-  mode: 'Bicycle',
-  status: 'Available',
-  canReceiveAssignments: true,
-  isDeleted: false,
-  createdAt: new Date('2024-02-10'),
-  statusHistory: [
-    { from: '', to: 'Available', changedAt: new Date('2024-02-10'), changedBy: 'System' }
-  ]
-},
-{
-  id: 'D007',
-  name: 'Peter Mwangi',
-  email: 'peter@example.com',
-  mode: 'Car',
-  status: 'On Delivery',
-  canReceiveAssignments: false,
-  isDeleted: false,
-  createdAt: new Date('2024-01-18'),
-  statusHistory: [
-    { from: '', to: 'Available', changedAt: new Date('2024-01-18'), changedBy: 'System' },
-    { from: 'Available', to: 'On Delivery', changedAt: new Date('2024-07-22'), changedBy: 'System' }
-  ]
-},
-{
-  id: 'D008',
-  name: 'Mary Njeri',
-  email: 'mary@example.com',
-  mode: 'Motorcycle',
-  status: 'Out Sick',
-  canReceiveAssignments: false,
-  isDeleted: false,
-  createdAt: new Date('2024-03-05'),
-  statusHistory: [
-    { from: '', to: 'Available', changedAt: new Date('2024-03-05'), changedBy: 'System' },
-    { from: 'Available', to: 'Out Sick', changedAt: new Date('2024-07-20'), changedBy: 'Admin' }
-  ]
-},
-{
-  id: 'D009',
-  name: 'Joseph Kariuki',
-  email: 'joseph@example.com',
-  mode: 'Car',
-  status: 'Available',
-  canReceiveAssignments: true,
-  isDeleted: false,
-  createdAt: new Date('2024-04-12'),
-  statusHistory: [
-    { from: '', to: 'Available', changedAt: new Date('2024-04-12'), changedBy: 'System' }
-  ]
-},
-{
-  id: 'D010',
-  name: 'Lucy Wambui',
-  email: 'lucy@example.com',
-  mode: 'Bicycle',
-  status: 'On Leave',
-  canReceiveAssignments: false,
-  isDeleted: false,
-  createdAt: new Date('2024-02-28'),
-  statusHistory: [
-    { from: '', to: 'Available', changedAt: new Date('2024-02-28'), changedBy: 'System' },
-    { from: 'Available', to: 'On Leave', changedAt: new Date('2024-07-18'), changedBy: 'Admin' }
-  ]
-},
-{
-  id: 'D011',
-  name: 'David Ochieng',
-  email: 'david@example.com',
-  mode: 'Motorcycle',
-  status: 'On Delivery',
-  canReceiveAssignments: false,
-  isDeleted: false,
-  createdAt: new Date('2024-01-30'),
-  statusHistory: [
-    { from: '', to: 'Available', changedAt: new Date('2024-01-30'), changedBy: 'System' },
-    { from: 'Available', to: 'On Leave', changedAt: new Date('2024-05-10'), changedBy: 'Admin' },
-    { from: 'On Leave', to: 'Available', changedAt: new Date('2024-06-01'), changedBy: 'Admin' },
-    { from: 'Available', to: 'On Delivery', changedAt: new Date('2024-07-22'), changedBy: 'System' }
-  ]
-},
-{
-  id: 'D012',
-  name: 'Catherine Akinyi',
-  email: 'catherine@example.com',
-  mode: 'Car',
-  status: 'Available',
-  canReceiveAssignments: true,
-  isDeleted: false,
-  createdAt: new Date('2024-03-15'),
-  statusHistory: [
-    { from: '', to: 'Available', changedAt: new Date('2024-03-15'), changedBy: 'System' },
-    { from: 'Available', to: 'Out Sick', changedAt: new Date('2024-06-20'), changedBy: 'Admin' },
-    { from: 'Out Sick', to: 'Available', changedAt: new Date('2024-07-05'), changedBy: 'Admin' }
-  ]
-},
-{
-  id: 'D013',
-  name: 'Robert Mutua',
-  email: 'robert@example.com',
-  mode: 'Car',
-  status: 'Suspended',
-  canReceiveAssignments: false,
-  isDeleted: false,
-  createdAt: new Date('2024-01-08'),
-  statusHistory: [
-    { from: '', to: 'Available', changedAt: new Date('2024-01-08'), changedBy: 'System' },
-    { from: 'Available', to: 'Suspended', changedAt: new Date('2024-07-10'), changedBy: 'Admin' }
-  ]
-},
-{
-  id: 'D014',
-  name: 'Alice Nyambura',
-  email: 'alice@example.com',
-  mode: 'Bicycle',
-  status: 'Available',
-  canReceiveAssignments: true,
-  isDeleted: false,
-  createdAt: new Date('2024-04-20'),
-  statusHistory: [
-    { from: '', to: 'Available', changedAt: new Date('2024-04-20'), changedBy: 'System' }
-  ]
-},
-{
-  id: 'D015',
-  name: 'Francis Kiprotich',
-  email: 'francis@example.com',
-  mode: 'Motorcycle',
-  status: 'On Delivery',
-  canReceiveAssignments: false,
-  isDeleted: false,
-  createdAt: new Date('2024-02-14'),
-  statusHistory: [
-    { from: '', to: 'Available', changedAt: new Date('2024-02-14'), changedBy: 'System' },
-    { from: 'Available', to: 'On Delivery', changedAt: new Date('2024-07-22'), changedBy: 'System' }
-  ]
-},
-    // Sample archived driver
-    {
-      id: 'D006',
-      name: 'John Archived',
-      email: 'john@example.com',
-      mode: 'Car',
-      status: 'Available',
-      canReceiveAssignments: false,
-      isDeleted: true,
-      deletedAt: new Date('2024-07-01'),
-      createdAt: new Date('2024-01-01')
-    }
-  ];
-
-  newDriver: Driver = {
-    id: '',
+    id: 0,
     name: '',
     email: '',
-    mode: 'Bicycle',
-    status: 'Available',
+    mode: 'BICYCLE',
+    status: 'AVAILABLE',
     canReceiveAssignments: true,
     isDeleted: false,
-    createdAt: new Date()
+    createdAt: new Date(),
   };
 
   currentPage = 1;
   itemsPerPage = 10;
 
-  constructor(private notificationService: NotificationService) {}
+  constructor(
+    private adminService: AdminService,
+    private notificationService: NotificationService,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    this.loadDrivers();
+  }
+
+  loadDrivers(): void {
+    this.adminService.getAllDrivers().subscribe({
+      next: (drivers) => {
+        this.drivers = drivers;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Failed to load drivers:', err);
+        this.notificationService.error('Failed to load drivers.');
+      },
+    });
+  }
 
   // Getters for filtering and pagination
   get filteredDrivers(): Driver[] {
-    let filtered = this.drivers.filter(d => {
-      // Show only active or archived based on toggle
+    return this.drivers.filter((d) => {
       if (this.showArchived && !d.isDeleted) return false;
       if (!this.showArchived && d.isDeleted) return false;
-      
-      // Text search
-      const matchesSearch = d.name.toLowerCase().includes(this.search.toLowerCase()) ||
-                           d.email.toLowerCase().includes(this.search.toLowerCase());
-      
-      // Status filter
+
+      const matchesSearch =
+        (d.name || '').toLowerCase().includes(this.search.toLowerCase()) ||
+        (d.email || '').toLowerCase().includes(this.search.toLowerCase());
+
       const matchesStatus = !this.statusFilter || d.status === this.statusFilter;
-      
+
       return matchesSearch && matchesStatus;
     });
-
-    return filtered;
   }
 
   get paginatedDrivers(): Driver[] {
@@ -336,8 +135,8 @@ export class AdminDriversComponent {
   }
 
   get allSelected(): boolean {
-    const visibleDrivers = this.paginatedDrivers.filter(d => !d.isDeleted);
-    return visibleDrivers.length > 0 && visibleDrivers.every(d => this.selectedDriverIds.includes(d.id));
+    const visibleDrivers = this.paginatedDrivers.filter((d) => !d.isDeleted);
+    return visibleDrivers.length > 0 && visibleDrivers.every((d) => this.selectedDriverIds.includes(d.id));
   }
 
   // Pagination methods
@@ -362,13 +161,13 @@ export class AdminDriversComponent {
 
   // Selection methods
   toggleAllSelection() {
-    const visibleDrivers = this.paginatedDrivers.filter(d => !d.isDeleted);
+    const visibleDrivers = this.paginatedDrivers.filter((d) => !d.isDeleted);
     if (this.allSelected) {
-      this.selectedDriverIds = this.selectedDriverIds.filter(id => 
-        !visibleDrivers.some(d => d.id === id)
+      this.selectedDriverIds = this.selectedDriverIds.filter(
+        (id) => !visibleDrivers.some((d) => d.id === id)
       );
     } else {
-      visibleDrivers.forEach(driver => {
+      visibleDrivers.forEach((driver) => {
         if (!this.selectedDriverIds.includes(driver.id)) {
           this.selectedDriverIds.push(driver.id);
         }
@@ -376,7 +175,7 @@ export class AdminDriversComponent {
     }
   }
 
-  toggleDriverSelection(driverId: string) {
+  toggleDriverSelection(driverId: number) {
     const index = this.selectedDriverIds.indexOf(driverId);
     if (index > -1) {
       this.selectedDriverIds.splice(index, 1);
@@ -392,8 +191,8 @@ export class AdminDriversComponent {
   // Bulk actions
   bulkStatusChange(newStatus: Driver['status']) {
     const count = this.selectedDriverIds.length;
-    this.selectedDriverIds.forEach(id => {
-      const driver = this.drivers.find(d => d.id === id);
+    this.selectedDriverIds.forEach((id) => {
+      const driver = this.drivers.find((d) => d.id === id);
       if (driver && !driver.isDeleted) {
         this.updateDriverStatus(driver, newStatus);
       }
@@ -418,7 +217,7 @@ export class AdminDriversComponent {
   }
 
   openEditModalFromAction(driver: Driver) {
-    this.closeActionModal(); // Close action modal first
+    this.closeActionModal();
     this.openEditModal(driver);
   }
 
@@ -437,9 +236,10 @@ export class AdminDriversComponent {
   }
 
   openStatusModal(driver: Driver) {
+    console.log('Opening status modal for driver:', driver);
     this.selectedDriver = driver;
     this.tempStatus = driver.status;
-    this.closeActionModal(); // Close action modal first
+    this.closeActionModal();
     this.showStatusModal = true;
   }
 
@@ -462,95 +262,245 @@ export class AdminDriversComponent {
     this.closeConfirmModal();
   }
 
+  // Debug radio button changes
+  onTempStatusChange(event: Event) {
+    console.log('tempStatus changed to:', this.tempStatus);
+  }
+
   // Driver CRUD operations
   saveDriver() {
-    if (!this.isValidDriver(this.newDriver)) return;
+    if (!this.isValidDriver(this.newDriver)) {
+      this.notificationService.error('Please provide valid driver details.');
+      return;
+    }
 
-    const id = 'D' + (this.drivers.length + 1).toString().padStart(3, '0');
-    const driver: Driver = {
-      ...this.newDriver,
-      id,
-      createdAt: new Date(),
-      canReceiveAssignments: true,
-      isDeleted: false,
-      statusHistory: [
-        { from: '', to: 'Available', changedAt: new Date(), changedBy: 'Admin' }
-      ]
+    const dto = {
+      name: this.newDriver.name,
+      email: this.newDriver.email,
+      password: this.newDriver.password!,
+      mode: this.newDriver.mode,
     };
-    
-    this.drivers.push(driver);
-    this.notificationService.success(`${driver.name} added as driver`);
-    this.closeModal();
+
+    this.adminService.createDriver(dto).subscribe({
+      next: (driver) => {
+        this.drivers = [
+          {
+            id: driver.id,
+            name: driver.name,
+            email: driver.email,
+            mode: driver.mode,
+            status: driver.status || 'AVAILABLE',
+            canReceiveAssignments: driver.status === 'AVAILABLE',
+            isDeleted: false,
+            createdAt: new Date(driver.createdAt),
+            statusHistory: driver.statusHistory || [
+              { from: '', to: 'AVAILABLE', changedAt: new Date(), changedBy: 'Admin' },
+            ],
+          },
+          ...this.drivers,
+        ];
+        this.notificationService.success(`${driver.name} added as driver`);
+        this.closeModal();
+      },
+      error: (err) => {
+        console.error('Failed to create driver:', err);
+        this.notificationService.error(err.error?.message || 'Failed to create driver.');
+      },
+    });
   }
 
   updateDriver() {
-    const index = this.drivers.findIndex(d => d.id === this.editDriver.id);
-    if (index !== -1) {
-      const oldStatus = this.drivers[index].status;
-      const newStatus = this.editDriver.status;
-      
-      // Update driver
-      this.drivers[index] = { 
-        ...this.editDriver,
-        canReceiveAssignments: this.calculateCanReceiveAssignments(newStatus)
-      };
-
-      // Add status history if status changed
-      if (oldStatus !== newStatus) {
-        this.addStatusHistory(this.drivers[index], oldStatus, newStatus);
-      }
-
-      this.notificationService.success(`Driver ${this.editDriver.name} updated`);
+    if (!this.isValidDriver(this.editDriver)) {
+      this.notificationService.error('Please provide valid driver details.');
+      return;
     }
-    this.closeEditModal();
+
+    const oldStatus = this.drivers.find((d) => d.id === this.editDriver.id)?.status;
+    const dto = {
+      name: this.editDriver.name,
+      email: this.editDriver.email,
+      mode: this.editDriver.mode,
+      status: this.editDriver.status,
+    };
+
+    this.adminService.updateDriver(this.editDriver.id, dto).subscribe({
+      next: (updated) => {
+        this.drivers = this.drivers.map((d) =>
+          d.id === this.editDriver.id
+            ? {
+                ...d,
+                name: updated.name,
+                email: updated.email,
+                mode: updated.mode,
+                status: updated.status,
+                canReceiveAssignments: updated.status === 'AVAILABLE',
+                statusHistory:
+                  oldStatus !== updated.status
+                    ? [
+                        ...(d.statusHistory || []),
+                        {
+                          from: oldStatus || '',
+                          to: updated.status,
+                          changedAt: new Date(),
+                          changedBy: 'Admin',
+                        },
+                      ]
+                    : d.statusHistory,
+              }
+            : d
+        );
+        this.cdr.detectChanges();
+        this.notificationService.success(`Driver ${this.editDriver.name} updated`);
+        this.closeEditModal();
+      },
+      error: (err) => {
+        console.error('Failed to update driver:', err);
+        this.notificationService.error(err.error?.message || 'Failed to update driver.');
+      },
+    });
   }
 
   changeDriverStatus() {
-    if (!this.selectedDriver) return;
-
-    const oldStatus = this.selectedDriver.status;
-    this.updateDriverStatus(this.selectedDriver, this.tempStatus);
-    
-    this.notificationService.success(
-      `${this.selectedDriver.name} status changed from ${oldStatus} to ${this.tempStatus}`
-    );
-    this.closeStatusModal();
+    console.log('changeDriverStatus called', {
+      selectedDriver: this.selectedDriver,
+      tempStatus: this.tempStatus,
+    });
+    if (!this.selectedDriver) {
+      console.error('No selected driver');
+      this.notificationService.error('No driver selected');
+      return;
+    }
+    if (this.tempStatus === this.selectedDriver.status) {
+      console.log('Status unchanged, skipping update');
+      this.notificationService.info('Status unchanged');
+      this.closeStatusModal();
+      return;
+    }
+    this.adminService.updateDriverStatus(this.selectedDriver.id, this.tempStatus).subscribe({
+      next: (updated) => {
+        console.log('Status update response:', updated);
+        const oldStatus = this.selectedDriver!.status;
+        this.drivers = this.drivers.map((d) =>
+          d.id === this.selectedDriver!.id
+            ? {
+                ...d,
+                status: updated.status,
+                canReceiveAssignments: updated.status === 'AVAILABLE',
+                statusHistory: [
+                  ...(d.statusHistory || []),
+                  {
+                    from: oldStatus,
+                    to: updated.status,
+                    changedAt: new Date(),
+                    changedBy: 'Admin',
+                  },
+                ],
+              }
+            : d
+        );
+        this.cdr.detectChanges();
+        this.notificationService.success(
+          `${this.selectedDriver!.name} status changed from ${this.getStatusDisplayName(oldStatus)} to ${this.getStatusDisplayName(this.tempStatus)}`
+        );
+        this.closeStatusModal();
+      },
+      error: (err) => {
+        console.error('Failed to change driver status:', err, err.response?.data);
+        this.notificationService.error(err.error?.message || 'Failed to change driver status.');
+      },
+    });
   }
 
   suspendDriver(driver: Driver) {
-    if (driver.status === 'Suspended') return;
-    
-    this.updateDriverStatus(driver, 'Suspended');
-    this.notificationService.warning(`${driver.name} has been suspended`);
-    this.closeActionModal();
+    if (driver.status === 'SUSPENDED') return;
+
+    this.adminService.updateDriverStatus(driver.id, 'SUSPENDED').subscribe({
+      next: (updated) => {
+        this.drivers = this.drivers.map((d) =>
+          d.id === driver.id
+            ? {
+                ...d,
+                status: updated.status,
+                canReceiveAssignments: false,
+                statusHistory: [
+                  ...(d.statusHistory || []),
+                  {
+                    from: driver.status,
+                    to: updated.status,
+                    changedAt: new Date(),
+                    changedBy: 'Admin',
+                  },
+                ],
+              }
+            : d
+        );
+        this.cdr.detectChanges();
+        this.notificationService.warning(`${driver.name} has been suspended`);
+        this.closeActionModal();
+      },
+      error: (err) => {
+        console.error('Failed to suspend driver:', err);
+        this.notificationService.error(err.error?.message || 'Failed to suspend driver.');
+      },
+    });
   }
 
-  // Soft delete functionality
   confirmDeleteDriver(driver: Driver) {
     this.openConfirmModal({
       title: 'Delete Driver',
       message: `Are you sure you want to delete ${driver.name}? They will be moved to deleted drivers and cannot receive new assignments.`,
       confirmText: 'Delete',
-      action: () => this.archiveDriver(driver)
+      action: () => this.archiveDriver(driver),
     });
   }
 
   archiveDriver(driver: Driver) {
-    driver.isDeleted = true;
-    driver.deletedAt = new Date();
-    driver.canReceiveAssignments = false;
-    
-    this.notificationService.error(`${driver.name} has been deleted`);
-    this.closeActionModal();
+    this.adminService.deleteDriver(driver.id).subscribe({
+      next: () => {
+        this.drivers = this.drivers.map((d) =>
+          d.id === driver.id
+            ? {
+                ...d,
+                isDeleted: true,
+                deletedAt: new Date(),
+                canReceiveAssignments: false,
+              }
+            : d
+        );
+        this.cdr.detectChanges();
+        this.notificationService.error(`${driver.name} has been deleted`);
+        this.closeActionModal();
+      },
+      error: (err) => {
+        console.error('Failed to delete driver:', err);
+        this.notificationService.error(err.error?.message || 'Failed to delete driver.');
+      },
+    });
   }
 
   restoreDriver(driver: Driver) {
-    driver.isDeleted = false;
-    driver.deletedAt = undefined;
-    driver.canReceiveAssignments = this.calculateCanReceiveAssignments(driver.status);
-    
-    this.notificationService.success(`${driver.name} has been restored`);
-    this.closeActionModal();
+    this.adminService.restoreDriver(driver.id).subscribe({
+      next: (updated) => {
+        this.drivers = this.drivers.map((d) =>
+          d.id === driver.id
+            ? {
+                ...d,
+                isDeleted: false,
+                deletedAt: undefined,
+                canReceiveAssignments: updated.status === 'AVAILABLE',
+                status: updated.status,
+              }
+            : d
+        );
+        this.cdr.detectChanges();
+        this.notificationService.success(`${driver.name} has been restored`);
+        this.closeActionModal();
+      },
+      error: (err) => {
+        console.error('Failed to restore driver:', err);
+        this.notificationService.error(err.error?.message || 'Failed to restore driver.');
+      },
+    });
   }
 
   confirmPermanentDelete(driver: Driver) {
@@ -558,14 +508,23 @@ export class AdminDriversComponent {
       title: 'Permanent Delete',
       message: `⚠️ WARNING: This will permanently delete ${driver.name} and cannot be undone. All their data will be lost.`,
       confirmText: 'Delete Forever',
-      action: () => this.permanentlyDeleteDriver(driver)
+      action: () => this.permanentlyDeleteDriver(driver),
     });
   }
 
   permanentlyDeleteDriver(driver: Driver) {
-    this.drivers = this.drivers.filter(d => d.id !== driver.id);
-    this.notificationService.error(`${driver.name} has been permanently deleted`);
-    this.closeActionModal();
+    this.adminService.permanentlyDeleteDriver(driver.id).subscribe({
+      next: () => {
+        this.drivers = this.drivers.filter((d) => d.id !== driver.id);
+        this.cdr.detectChanges();
+        this.notificationService.error(`${driver.name} has been permanently deleted`);
+        this.closeActionModal();
+      },
+      error: (err) => {
+        console.error('Failed to permanently delete driver:', err);
+        this.notificationService.error(err.error?.message || 'Failed to permanently delete driver.');
+      },
+    });
   }
 
   // Status management
@@ -574,46 +533,62 @@ export class AdminDriversComponent {
   }
 
   private updateDriverStatus(driver: Driver, newStatus: Driver['status']) {
-    const oldStatus = driver.status;
-    driver.status = newStatus;
-    driver.canReceiveAssignments = this.calculateCanReceiveAssignments(newStatus);
-    
-    this.addStatusHistory(driver, oldStatus, newStatus);
+    this.adminService.updateDriverStatus(driver.id, newStatus).subscribe({
+      next: (updated) => {
+        this.drivers = this.drivers.map((d) =>
+          d.id === driver.id
+            ? {
+                ...d,
+                status: updated.status,
+                canReceiveAssignments: updated.status === 'AVAILABLE',
+                statusHistory: [
+                  ...(d.statusHistory || []),
+                  {
+                    from: driver.status,
+                    to: updated.status,
+                    changedAt: new Date(),
+                    changedBy: 'Admin',
+                  },
+                ],
+              }
+            : d
+        );
+        this.cdr.detectChanges();
+        this.notificationService.success(`${driver.name} status updated to ${this.getStatusDisplayName(newStatus)}`);
+      },
+      error: (err) => {
+        console.error('Failed to update driver status:', err);
+        this.notificationService.error(err.error?.message || 'Failed to update driver status.');
+      },
+    });
   }
 
   private calculateCanReceiveAssignments(status: Driver['status']): boolean {
-    return status === 'Available';
-  }
-
-  private addStatusHistory(driver: Driver, from: string, to: string) {
-    if (!driver.statusHistory) {
-      driver.statusHistory = [];
-    }
-    
-    driver.statusHistory.push({
-      from,
-      to,
-      changedAt: new Date(),
-      changedBy: 'Admin' // In real app, get from auth service
-    });
+    return status === 'AVAILABLE';
   }
 
   private resetNewDriver() {
     this.newDriver = {
-      id: '',
+      id: 0,
       name: '',
       email: '',
-      mode: 'Bicycle',
-      status: 'Available',
+      password: '',
+      mode: 'BICYCLE',
+      status: 'AVAILABLE',
       canReceiveAssignments: true,
       isDeleted: false,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
   }
 
   // Utility methods
-  isValidDriver(driver: Driver): boolean {
-    return !!(driver.name?.trim() && driver.email?.trim() && this.isValidEmail(driver.email));
+  isValidDriver(driver: Driver & { password?: string }): boolean {
+    return !!(
+      driver.name?.trim() &&
+      driver.email?.trim() &&
+      this.isValidEmail(driver.email) &&
+      (driver.password?.trim() || !this.showModal)
+    );
   }
 
   private isValidEmail(email: string): boolean {
@@ -625,13 +600,24 @@ export class AdminDriversComponent {
     return status.toLowerCase().replace(/\s+/g, '-');
   }
 
+  getStatusDisplayName(status: Driver['status']): string {
+    const statusDisplayNames = {
+      AVAILABLE: 'Available',
+      ON_DELIVERY: 'On Delivery',
+      OUT_SICK: 'Out Sick',
+      ON_LEAVE: 'On Leave',
+      SUSPENDED: 'Suspended',
+    };
+    return statusDisplayNames[status] || status;
+  }
+
   getStatusDescription(status: Driver['status']): string {
     const descriptions = {
-      'Available': 'Driver can receive new delivery assignments.',
-      'On Delivery': 'Driver is currently on a delivery (system managed).',
-      'Out Sick': 'Driver is temporarily unavailable due to illness.',
-      'On Leave': 'Driver is on scheduled time off.',
-      'Suspended': 'Driver account is restricted and cannot receive assignments.'
+      AVAILABLE: 'Driver can receive new delivery assignments.',
+      ON_DELIVERY: 'Driver is currently on a delivery (system managed).',
+      OUT_SICK: 'Driver is temporarily unavailable due to illness.',
+      ON_LEAVE: 'Driver is on scheduled time off.',
+      SUSPENDED: 'Driver account is restricted and cannot receive assignments.',
     };
     return descriptions[status] || '';
   }
@@ -643,7 +629,7 @@ export class AdminDriversComponent {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     }).format(date);
   }
 }

@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { geocodeLocation } from '../common/utils/geocode';
+import { geocodeLocationWithFallback } from '../common/utils/geocode';
 import { getDistanceInKm } from '../common/utils/distance';
-import { ParcelStatus } from '@prisma/client';
+import { ParcelStatus, DriverStatus } from '@prisma/client';
 
 @Injectable()
 export class DriverService {
@@ -12,98 +14,306 @@ export class DriverService {
     driverId: number,
     parcelId: string,
     locationName: string,
-  ): Promise<{ status: ParcelStatus | null }> {
-    const coords = await geocodeLocation(locationName);
+  ): Promise<{ status: ParcelStatus | null; message?: string }> {
+    try {
+      if (!locationName || locationName.trim() === '') {
+        throw new BadRequestException('Location name is required');
+      }
 
-    await this.prisma.driver.update({
-      where: { id: driverId },
-      data: {
-        currentLat: coords.lat,
-        currentLng: coords.lng,
-      },
-    });
+      const cleanLocationName = locationName.trim();
+      console.log(
+        `Driver ${driverId} updating location to: ${cleanLocationName}`,
+      );
 
-    const parcel = await this.prisma.parcel.findFirst({
-      where: {
-        id: parcelId,
-        driverId,
-        status: {
-          in: [
-            ParcelStatus.ASSIGNED,
-            ParcelStatus.PICKED_UP_BY_DRIVER,
-            ParcelStatus.IN_TRANSIT,
-          ],
+      const coords = await geocodeLocationWithFallback(cleanLocationName);
+
+      await this.prisma.driver.update({
+        where: { id: driverId },
+        data: {
+          currentLat: coords.lat,
+          currentLng: coords.lng,
+          updatedAt: new Date(),
         },
-      },
-    });
+      });
 
-    if (
-      !parcel ||
-      parcel.destinationLat == null ||
-      parcel.destinationLng == null
-    ) {
-      return { status: null };
+      console.log(
+        `Driver ${driverId} location updated to coordinates: ${coords.lat}, ${coords.lng}`,
+      );
+
+      const parcel = await this.prisma.parcel.findFirst({
+        where: {
+          id: parcelId,
+          driverId,
+        },
+      });
+
+      if (!parcel) {
+        console.log(
+          `❌ Parcel not found for driver ${driverId} with parcel ID ${parcelId}`,
+        );
+        return {
+          status: null,
+          message: 'Parcel not assigned to this driver or not found',
+        };
+      }
+
+      const activeStatuses: ParcelStatus[] = [
+        ParcelStatus.PICKED_UP_BY_DRIVER,
+        ParcelStatus.IN_TRANSIT,
+      ];
+
+      if (!activeStatuses.includes(parcel.status)) {
+        console.log(
+          `⚠️ Parcel found but in status "${parcel.status}" which is not valid for updates`,
+        );
+        return {
+          status: null,
+          message: `Parcel is in status "${parcel.status}" which is not active for location updates`,
+        };
+      }
+
+      // Check for destination coordinates, geocode 'to' field if missing
+      let destinationLat = parcel.destinationLat;
+      let destinationLng = parcel.destinationLng;
+      if (destinationLat == null || destinationLng == null) {
+        console.log(
+          `Parcel ${parcelId} has no destination coordinates, attempting to geocode: ${parcel.to}`,
+        );
+        try {
+          const destinationCoords = await geocodeLocationWithFallback(
+            parcel.to,
+          );
+          destinationLat = destinationCoords.lat;
+          destinationLng = destinationCoords.lng;
+
+          // Update parcel with geocoded coordinates
+          await this.prisma.parcel.update({
+            where: { id: parcelId },
+            data: {
+              destinationLat,
+              destinationLng,
+              updatedAt: new Date(),
+            },
+          });
+          console.log(
+            `Parcel ${parcelId} updated with destination coordinates: ${destinationLat}, ${destinationLng}`,
+          );
+        } catch (error) {
+          console.error(`Failed to geocode destination: ${parcel.to}`, error);
+          return {
+            status: null,
+            message: `Unable to update location: Failed to geocode destination "${parcel.to}"`,
+          };
+        }
+      }
+
+      const distance = getDistanceInKm(
+        coords.lat,
+        coords.lng,
+        destinationLat,
+        destinationLng,
+      );
+
+      console.log(`Distance to destination: ${distance.toFixed(3)} km`);
+
+      const newStatus =
+        distance <= 0.3 ? ParcelStatus.DELIVERED : ParcelStatus.IN_TRANSIT;
+
+      if (parcel.status !== newStatus) {
+        await this.prisma.parcel.update({
+          where: { id: parcel.id },
+          data: {
+            status: newStatus,
+            deliveredAt:
+              newStatus === ParcelStatus.DELIVERED ? new Date() : undefined,
+            updatedAt: new Date(),
+          },
+        });
+
+        await this.prisma.parcelStatusLog.create({
+          data: {
+            parcelId: parcel.id,
+            status: newStatus,
+          },
+        });
+
+        console.log(`Parcel ${parcelId} status updated to: ${newStatus}`);
+      }
+
+      return {
+        status: newStatus,
+        message:
+          newStatus === ParcelStatus.DELIVERED
+            ? 'Parcel delivered successfully!'
+            : `Location updated. Distance to destination: ${distance.toFixed(3)} km`,
+      };
+    } catch (error) {
+      console.error('Error updating driver location:', error);
+
+      if (error.message?.includes('geocode')) {
+        throw new BadRequestException(
+          `Unable to find the location "${locationName}". Please check the spelling or try a more specific address (e.g., "Westlands Shopping Mall, Nairobi").`,
+        );
+      }
+
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      throw new BadRequestException(
+        'Failed to update location. Please try again.',
+      );
     }
-
-    const distance = getDistanceInKm(
-      coords.lat,
-      coords.lng,
-      parcel.destinationLat,
-      parcel.destinationLng,
-    );
-
-    const newStatus =
-      distance <= 0.3 ? ParcelStatus.DELIVERED : ParcelStatus.IN_TRANSIT;
-
-    await this.prisma.parcel.update({
-      where: { id: parcel.id },
-      data: {
-        status: newStatus,
-        deliveredAt:
-          newStatus === ParcelStatus.DELIVERED ? new Date() : undefined,
-      },
-    });
-
-    await this.prisma.parcelStatusLog.create({
-      data: {
-        parcelId: parcel.id,
-        status: newStatus,
-      },
-    });
-
-    return { status: newStatus };
   }
 
   async getMyParcels(driverId: number) {
-    return this.prisma.parcel.findMany({
-      where: { driverId },
-      orderBy: { sentAt: 'desc' },
-    });
+    try {
+      return await this.prisma.parcel.findMany({
+        where: { driverId },
+        orderBy: { sentAt: 'desc' },
+        include: { driver: { select: { currentLat: true, currentLng: true } } },
+      });
+    } catch (error) {
+      console.error('Error fetching driver parcels:', error);
+      throw new BadRequestException('Failed to fetch parcels');
+    }
   }
 
   async getAllDrivers() {
-    return this.prisma.driver.findMany({
-      where: { deletedAt: null },
-      orderBy: { createdAt: 'desc' },
-    });
+    try {
+      return await this.prisma.driver.findMany({
+        where: { deletedAt: null },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          currentLat: true,
+          currentLng: true,
+          createdAt: true,
+        },
+      });
+    } catch (error) {
+      console.error('Error fetching drivers:', error);
+      throw new BadRequestException('Failed to fetch drivers');
+    }
   }
 
   async markParcelPickedUp(driverId: number, parcelId: string) {
-    const parcel = await this.prisma.parcel.update({
-      where: { id: parcelId },
+    try {
+      const parcelCheck = await this.prisma.parcel.findUnique({
+        where: { id: parcelId },
+      });
+
+      console.log('📦 Parcel Found:', parcelCheck);
+      console.log('🧑‍✈️ Requesting driverId:', driverId);
+
+      if (!parcelCheck) {
+        throw new BadRequestException(`Parcel with ID ${parcelId} not found`);
+      }
+
+      if (parcelCheck.driverId !== driverId) {
+        throw new BadRequestException(
+          `Parcel is not assigned to driver ID ${driverId}`,
+        );
+      }
+
+      if (parcelCheck.status !== ParcelStatus.ASSIGNED) {
+        throw new BadRequestException(
+          `Parcel is in status "${parcelCheck.status}", expected ASSIGNED`,
+        );
+      }
+
+      const parcel = await this.prisma.parcel.update({
+        where: { id: parcelId },
+        data: {
+          status: ParcelStatus.PICKED_UP_BY_DRIVER,
+          pickedAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+
+      await this.prisma.parcelStatusLog.create({
+        data: {
+          parcelId: parcel.id,
+          status: ParcelStatus.PICKED_UP_BY_DRIVER,
+        },
+      });
+
+      console.log(
+        `✅ Parcel ${parcelId} marked as picked up by driver ${driverId}`,
+      );
+
+      return parcel;
+    } catch (error) {
+      console.error('❌ Error marking parcel as picked up:', error);
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to mark parcel as picked up');
+    }
+  }
+
+  async updateDriverStatus(driverId: number, status: string) {
+    const validStatuses = [
+      'AVAILABLE',
+      'ON_DELIVERY',
+      'OUT_SICK',
+      'ON_LEAVE',
+      'SUSPENDED',
+    ];
+
+    if (!validStatuses.includes(status.toUpperCase())) {
+      throw new BadRequestException(`Invalid status: ${status}`);
+    }
+
+    return this.prisma.driver.update({
+      where: { id: driverId },
       data: {
-        status: ParcelStatus.PICKED_UP_BY_DRIVER, // ✅ Correct enum
-        pickedAt: new Date(),
+        status: status.toUpperCase() as DriverStatus,
+        canReceiveAssignments: status.toUpperCase() === 'AVAILABLE',
       },
     });
+  }
 
-    await this.prisma.parcelStatusLog.create({
+  async softDeleteDriver(driverId: number) {
+    const existing = await this.prisma.driver.findUnique({
+      where: { id: driverId },
+    });
+    if (!existing) throw new BadRequestException('Driver not found');
+
+    return this.prisma.driver.update({
+      where: { id: driverId },
+      data: { deletedAt: new Date(), canReceiveAssignments: false },
+    });
+  }
+
+  async restoreDriver(driverId: number) {
+    const existing = await this.prisma.driver.findUnique({
+      where: { id: driverId },
+    });
+    if (!existing || !existing.deletedAt) {
+      throw new BadRequestException('Driver is not deleted or does not exist');
+    }
+
+    return this.prisma.driver.update({
+      where: { id: driverId },
       data: {
-        parcelId: parcel.id,
-        status: ParcelStatus.PICKED_UP_BY_DRIVER,
+        deletedAt: null,
+        status: DriverStatus.AVAILABLE,
+        canReceiveAssignments: true,
       },
     });
+  }
 
-    return parcel;
+  async permanentlyDeleteDriver(driverId: number) {
+    const existing = await this.prisma.driver.findUnique({
+      where: { id: driverId },
+    });
+    if (!existing) throw new BadRequestException('Driver not found');
+
+    return this.prisma.driver.delete({
+      where: { id: driverId },
+    });
   }
 }

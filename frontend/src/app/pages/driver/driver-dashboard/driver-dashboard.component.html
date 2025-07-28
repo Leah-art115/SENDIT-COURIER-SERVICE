@@ -29,6 +29,7 @@
         <th>Recipient</th>
         <th>Status</th>
         <th>Date</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -37,12 +38,18 @@
         <td>{{ delivery.trackingId }}</td>
         <td>{{ delivery.recipient }}</td>
         <td>
-          <span class="status" [ngClass]="delivery.status.toLowerCase().replace(' ', '-')">
-            {{ delivery.status }}
+          <span class="status" [ngClass]="delivery.status.toLowerCase().replace('_', '-')">
+            {{ delivery.status | titlecase }}
           </span>
         </td>
         <td>{{ delivery.date }}</td>
+        <td>
+          <button *ngIf="delivery.status === 'ASSIGNED'" (click)="markPickedUp(delivery.trackingId)">
+            Mark Picked Up
+          </button>
+        </td>
       </tr>
     </tbody>
   </table>
 </div>
+

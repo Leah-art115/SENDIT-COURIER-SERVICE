@@ -1,32 +1,41 @@
-import { Component, AfterViewInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserNavbarComponent } from '../user-navbar/user-navbar.component';
+import { UserService, UserProfile } from '../../../services/user.service';
+import { NotificationService } from '../../../shared/notification/notification.service'; // Added
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { catchError, map, switchMap } from 'rxjs/operators';
+import { throwError } from 'rxjs';
 
 // Declare google as a global variable for TypeScript
 declare const google: any;
 
 interface Parcel {
+  id: string;
   trackingId: string;
   sender: string;
   from: string;
   to: string;
   dateSent: string;
   status: string;
-  description: string;
+  description: string | null;
   type: string;
   weight: string;
   paymentMethod: string;
   deliveryMode: string;
   expectedDelivery: string;
+  price: string; // Added
   currentLocation: {
     lat: number;
     lng: number;
   };
+  destinationLocation: {
+    lat: number;
+    lng: number;
+  };
 }
-
-/// <reference types="google.maps" />
 
 @Component({
   selector: 'app-received',
@@ -35,7 +44,7 @@ interface Parcel {
   templateUrl: './received.component.html',
   styleUrls: ['./received.component.css']
 })
-export class ReceivedComponent implements AfterViewInit {
+export class ReceivedComponent implements OnInit, AfterViewInit {
   filterName = '';
   filterStatus = '';
   filterMode = '';
@@ -47,39 +56,23 @@ export class ReceivedComponent implements AfterViewInit {
   showInfoModal = false;
   selectedParcel: Parcel | null = null;
   mapInitialized = false;
+  parcels: Parcel[] = [];
 
-  parcels: Parcel[] = [
-    {
-      trackingId: 'PKG-2011',
-      sender: 'Daniel Mutiso',
-      from: 'Eldoret',
-      to: 'Nairobi',
-      dateSent: '2025-07-14',
-      status: 'In Transit',
-      description: 'Electronics',
-      type: 'Box',
-      weight: '3.5 kg',
-      paymentMethod: 'M-Pesa',
-      deliveryMode: 'Express',
-      expectedDelivery: '2025-07-18',
-      currentLocation: { lat: 0.3, lng: 36.2 }
-    },
-    {
-      trackingId: 'PKG-2012',
-      sender: 'Faith Wanjiku',
-      from: 'Kisumu',
-      to: 'Nairobi',
-      dateSent: '2025-07-10',
-      status: 'Delivered',
-      description: 'Gift package',
-      type: 'Envelope',
-      weight: '0.5 kg',
-      paymentMethod: 'Cash',
-      deliveryMode: 'Standard',
-      expectedDelivery: '2025-07-13',
-      currentLocation: { lat: -1.2921, lng: 36.8219 }
-    }
-  ];
+  private baseUrl = environment.apiBaseUrl || 'http://localhost:3000/api';
+
+  constructor(
+    private userService: UserService,
+    private http: HttpClient,
+    private notificationService: NotificationService // Added
+  ) {}
+
+  private getAuthHeaders(): HttpHeaders {
+    const token = localStorage.getItem('auth_token');
+    return new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    });
+  }
 
   get filteredParcels(): Parcel[] {
     return this.parcels.filter(p => {
@@ -94,35 +87,124 @@ export class ReceivedComponent implements AfterViewInit {
     });
   }
 
+  ngOnInit(): void {
+    this.loadParcels();
+  }
+
   ngAfterViewInit(): void {
     this.loadGoogleMapsScript();
   }
 
+  private loadParcels(): void {
+    this.userService.getUserProfile().pipe(
+      switchMap((profile: UserProfile) => {
+        return this.http.get<any[]>(`${this.baseUrl}/user/received-parcels`, { headers: this.getAuthHeaders() }).pipe(
+          map((parcels: any[]) => parcels.map((parcel: any) => ({
+            id: parcel.id,
+            trackingId: parcel.trackingId,
+            sender: parcel.senderName,
+            from: parcel.from,
+            to: parcel.to,
+            dateSent: new Date(parcel.sentAt).toISOString().split('T')[0],
+            status: parcel.status,
+            description: parcel.description || 'No description',
+            type: parcel.type,
+            weight: `${parcel.weight} kg`,
+            paymentMethod: 'Unknown', // Not in backend schema
+            deliveryMode: parcel.mode,
+            expectedDelivery: parcel.deliveredAt
+              ? new Date(parcel.deliveredAt).toISOString().split('T')[0]
+              : new Date(new Date(parcel.sentAt).getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            price: `KSh ${parcel.price.toFixed(2)}`, // Added
+            currentLocation: { lat: parcel.fromLat || 0, lng: parcel.fromLng || 0 },
+            destinationLocation: { lat: parcel.destinationLat || 0, lng: parcel.destinationLng || 0 }
+          }))),
+          catchError((error: unknown) => {
+            console.error('Failed to load received parcels:', error);
+            this.notificationService.error('Failed to load received parcels.');
+            return throwError(() => new Error('Failed to load received parcels'));
+          })
+        );
+      })
+    ).subscribe({
+      next: (mappedParcels: Parcel[]) => {
+        this.parcels = mappedParcels;
+      },
+      error: (error: unknown) => {
+        console.error('Error processing parcels:', error);
+        this.notificationService.error('Error processing parcels.');
+      }
+    });
+  }
+
+  markAsPickedUp(parcel: Parcel): void {
+    if (parcel.status !== 'DELIVERED') {
+      this.notificationService.error('Parcel must be delivered before marking as picked up.');
+      return;
+    }
+    this.http.patch(`${this.baseUrl}/user/mark-driver-picked-up/${parcel.id}`, {}, { headers: this.getAuthHeaders() }).pipe(
+      catchError((error: unknown) => {
+        console.error('Failed to mark parcel as picked up:', error);
+        this.notificationService.error('Failed to mark parcel as picked up.');
+        return throwError(() => new Error('Failed to mark parcel as picked up'));
+      })
+    ).subscribe({
+      next: () => {
+        this.parcels = this.parcels.map(p =>
+          p.id === parcel.id ? { ...p, status: 'PICKED_UP_BY_DRIVER' } : p
+        );
+        if (this.selectedParcel?.id === parcel.id) {
+          this.selectedParcel = { ...this.selectedParcel, status: 'PICKED_UP_BY_DRIVER' };
+        }
+        this.notificationService.success('Parcel marked as picked up successfully.');
+      }
+    });
+  }
+
+  markAsComplete(parcel: Parcel): void {
+    if (parcel.status !== 'PICKED_UP_BY_DRIVER') {
+      this.notificationService.error('Parcel must be picked up before marking as complete.');
+      return;
+    }
+    this.http.patch(`${this.baseUrl}/user/mark-collected/${parcel.id}`, {}, { headers: this.getAuthHeaders() }).pipe(
+      catchError((error: unknown) => {
+        console.error('Failed to mark parcel as complete:', error);
+        this.notificationService.error('Failed to mark parcel as complete.');
+        return throwError(() => new Error('Failed to mark parcel as complete'));
+      })
+    ).subscribe({
+      next: () => {
+        this.parcels = this.parcels.map(p =>
+          p.id === parcel.id ? { ...p, status: 'COLLECTED_BY_RECEIVER' } : p
+        );
+        if (this.selectedParcel?.id === parcel.id) {
+          this.selectedParcel = { ...this.selectedParcel, status: 'COLLECTED_BY_RECEIVER' };
+        }
+        this.notificationService.success('Parcel marked as complete successfully.');
+      }
+    });
+  }
+
   loadGoogleMapsScript(): void {
-    if (
-      this.mapInitialized ||
-      (window as Window & typeof globalThis & { google?: any }).google?.maps
-    ) {
+    if (this.mapInitialized || (window as Window & typeof globalThis & { google?: any }).google?.maps) {
       this.mapInitialized = true;
       return;
     }
 
     const script = document.createElement('script');
-    // Use the modern loading approach with callback and libraries
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}&loading=async&libraries=marker&callback=initGoogleMaps`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}&loading=async&libraries=marker&callback=initGoogleMapsReceived`;
     script.async = true;
     script.defer = true;
-    
-    // Create a global callback function
-    (window as Window & typeof globalThis & { initGoogleMaps: () => void }).initGoogleMaps = () => {
+
+    (window as Window & typeof globalThis & { initGoogleMapsReceived: () => void }).initGoogleMapsReceived = () => {
       this.mapInitialized = true;
-      console.log('Google Maps loaded successfully');
+      console.log('Google Maps loaded successfully for received component');
     };
 
     script.onerror = () => {
       console.error('Failed to load Google Maps script');
+      this.notificationService.error('Failed to load Google Maps.');
     };
-
     document.head.appendChild(script);
   }
 
@@ -138,33 +220,28 @@ export class ReceivedComponent implements AfterViewInit {
 
   async renderGoogleMap(parcel: Parcel): Promise<void> {
     try {
-      const destinationCoords = this.getLatLng(parcel.to);
-
-      // Import the AdvancedMarkerElement library
       const { AdvancedMarkerElement, PinElement } = await (window as any).google.maps.importLibrary("marker");
 
       const map = new google.maps.Map(document.getElementById('google-map'), {
         center: parcel.currentLocation,
         zoom: 7,
-        mapId: 'DEMO_MAP_ID' // Required for AdvancedMarkerElement
+        mapId: 'DEMO_MAP_ID'
       });
 
-      // Create custom pins for better visibility
       const currentLocationPin = new PinElement({
-        background: '#22c55e', // Green color
+        background: '#22c55e',
         borderColor: '#16a34a',
         glyphColor: '#ffffff',
         glyph: '📍'
       });
 
       const destinationPin = new PinElement({
-        background: '#ef4444', // Red color
+        background: '#ef4444',
         borderColor: '#dc2626',
         glyphColor: '#ffffff',
         glyph: '🎯'
       });
 
-      // Current location marker using AdvancedMarkerElement
       new AdvancedMarkerElement({
         position: parcel.currentLocation,
         map,
@@ -172,17 +249,15 @@ export class ReceivedComponent implements AfterViewInit {
         content: currentLocationPin.element
       });
 
-      // Destination marker using AdvancedMarkerElement
       new AdvancedMarkerElement({
-        position: destinationCoords,
+        position: parcel.destinationLocation,
         map,
         title: 'Destination',
         content: destinationPin.element
       });
 
-      // Route line with direction arrow
       const routeLine = new google.maps.Polyline({
-        path: [parcel.currentLocation, destinationCoords],
+        path: [parcel.currentLocation, parcel.destinationLocation],
         geodesic: true,
         strokeColor: '#4285F4',
         strokeOpacity: 0.9,
@@ -195,38 +270,29 @@ export class ReceivedComponent implements AfterViewInit {
             fillColor: '#4285F4',
             fillOpacity: 1
           },
-          offset: '50%' // Arrow appears at the center of the line
+          offset: '50%'
         }],
         map
       });
 
-      // Fit bounds around both markers
       const bounds = new google.maps.LatLngBounds();
       bounds.extend(parcel.currentLocation);
-      bounds.extend(destinationCoords);
-      map.fitBounds(bounds);
-
-      // Add some padding to the bounds
-      const padding = { top: 50, right: 50, bottom: 50, left: 50 };
-      map.fitBounds(bounds, padding);
+      bounds.extend(parcel.destinationLocation);
+      map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
 
     } catch (error) {
       console.error('Error rendering Google Map:', error);
-      // Fallback to legacy markers if AdvancedMarkerElement fails
+      this.notificationService.error('Failed to render Google Map.');
       this.renderLegacyGoogleMap(parcel);
     }
   }
 
-  // Fallback method using legacy markers (for compatibility)
   renderLegacyGoogleMap(parcel: Parcel): void {
-    const destinationCoords = this.getLatLng(parcel.to);
-
     const map = new google.maps.Map(document.getElementById('google-map'), {
       center: parcel.currentLocation,
       zoom: 7
     });
 
-    // Current location marker (green) - legacy
     new google.maps.Marker({
       position: parcel.currentLocation,
       map,
@@ -237,9 +303,8 @@ export class ReceivedComponent implements AfterViewInit {
       }
     });
 
-    // Destination marker (red) - legacy
     new google.maps.Marker({
-      position: destinationCoords,
+      position: parcel.destinationLocation,
       map,
       title: 'Destination',
       icon: {
@@ -248,9 +313,8 @@ export class ReceivedComponent implements AfterViewInit {
       }
     });
 
-    // Route line with direction arrow
     const routeLine = new google.maps.Polyline({
-      path: [parcel.currentLocation, destinationCoords],
+      path: [parcel.currentLocation, parcel.destinationLocation],
       geodesic: true,
       strokeColor: '#4285F4',
       strokeOpacity: 0.9,
@@ -268,11 +332,10 @@ export class ReceivedComponent implements AfterViewInit {
       map
     });
 
-    // Fit bounds around both markers
     const bounds = new google.maps.LatLngBounds();
     bounds.extend(parcel.currentLocation);
-    bounds.extend(destinationCoords);
-    map.fitBounds(bounds);
+    bounds.extend(parcel.destinationLocation);
+    map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
   }
 
   openInfo(parcel: Parcel): void {
@@ -284,15 +347,5 @@ export class ReceivedComponent implements AfterViewInit {
     this.showMapModal = false;
     this.showInfoModal = false;
     this.selectedParcel = null;
-  }
-
-  getLatLng(city: string): { lat: number; lng: number } {
-    const map: Record<string, { lat: number; lng: number }> = {
-      Nairobi: { lat: -1.2921, lng: 36.8219 },
-      Kisumu: { lat: 0.0917, lng: 34.7680 },
-      Eldoret: { lat: 0.5143, lng: 35.2698 },
-      Mombasa: { lat: -4.0435, lng: 39.6682 }
-    };
-    return map[city] || { lat: 0, lng: 0 };
   }
 }

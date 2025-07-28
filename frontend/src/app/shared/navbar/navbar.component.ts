@@ -56,11 +56,12 @@ export class NavbarComponent {
   goToDashboard(): void {
   if (this.authService.isAdmin()) {
     this.router.navigate(['/admin']);
+  } else if (this.authService.isDriver()) {
+    this.router.navigate(['/driver']);
   } else {
     this.router.navigate(['/user']);
   }
 }
-
 
   logout() {
     this.authService.logout();

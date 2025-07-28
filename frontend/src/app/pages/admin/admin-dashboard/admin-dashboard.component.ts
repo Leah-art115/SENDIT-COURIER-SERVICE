@@ -1,12 +1,21 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Subscription } from 'rxjs';
+import { AdminService } from '../../../services/admin.service';
+import { NotificationService } from '../../../shared/notification/notification.service';
 
-interface ParcelSummary {
-  id: string;
-  sender: string;
-  receiver: string;
-  status: 'Delivered' | 'In Transit' | string;
-  date: string;
+interface DashboardMetrics {
+  totalEarnings: number;
+  totalUsers: number;
+  parcelsInTransit: number;
+  parcelsDelivered: number;
+  recentParcels: {
+    trackingId: string;
+    senderName: string;
+    receiverName: string;
+    status: string;
+    updatedAt: string;
+  }[];
 }
 
 @Component({
@@ -16,20 +25,52 @@ interface ParcelSummary {
   templateUrl: './admin-dashboard.component.html',
   styleUrls: ['./admin-dashboard.component.css']
 })
-export class AdminDashboardComponent implements OnInit {
-  totalEarnings = 245000; // placeholder
-  totalUsers = 120;       // placeholder
-  parcelsInTransit = 25;  // placeholder
-  parcelsDelivered = 80;  // placeholder
+export class AdminDashboardComponent implements OnInit, OnDestroy {
+  metrics: DashboardMetrics | null = null;
+  private subscription: Subscription | null = null;
 
-  recentParcels: ParcelSummary[] = [
-    { id: 'PKG-0012', sender: 'Leah A.', receiver: 'Mark K.', status: 'Delivered', date: '2025-07-18' },
-    { id: 'PKG-0013', sender: 'John M.', receiver: 'Daisy O.', status: 'In Transit', date: '2025-07-18' },
-    { id: 'PKG-0014', sender: 'Daisy O.', receiver: 'Tony B.', status: 'Delivered', date: '2025-07-18' },
-    { id: 'PKG-0015', sender: 'Tony B.', receiver: 'Leah A.', status: 'In Transit', date: '2025-07-18' }
-  ];
+  constructor(
+    private adminService: AdminService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit() {
-    console.log('recentParcels:', this.recentParcels);
+    this.loadMetrics();
+  }
+
+  loadMetrics(): void {
+    this.subscription = this.adminService.getDashboardMetrics().subscribe({
+      next: (metrics: DashboardMetrics) => {
+        this.metrics = {
+          totalEarnings: metrics.totalEarnings,
+          totalUsers: metrics.totalUsers,
+          parcelsInTransit: metrics.parcelsInTransit,
+          parcelsDelivered: metrics.parcelsDelivered,
+          recentParcels: metrics.recentParcels.map((parcel: {
+            trackingId: string;
+            senderName: string;
+            receiverName: string;
+            status: string;
+            updatedAt: string;
+          }) => ({
+            trackingId: parcel.trackingId,
+            senderName: parcel.senderName,
+            receiverName: parcel.receiverName,
+            status: parcel.status,
+            updatedAt: new Date(parcel.updatedAt).toISOString()
+          }))
+        };
+      },
+      error: (error: any) => {
+        console.error('Failed to load dashboard metrics:', error);
+        this.notificationService.error('Failed to load dashboard metrics: ' + error.message);
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
   }
 }

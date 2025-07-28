@@ -1,15 +1,14 @@
 import { Module } from '@nestjs/common';
-import { DriverController } from './driver.controller';
-import { DriverService } from './driver.service';
+import { UserController } from './user.controller';
+import { UserService } from './user.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 import { AuthGuard } from '../guards/auth.guard';
 import { RolesGuard } from '../guards/roles/roles.guard';
-import { ParcelService } from '../parcel/parcel.service';
 
 @Module({
   imports: [PrismaModule, AuthModule],
-  controllers: [DriverController],
-  providers: [DriverService, ParcelService, AuthGuard, RolesGuard],
+  controllers: [UserController],
+  providers: [UserService, AuthGuard, RolesGuard],
 })
-export class DriverModule {}
+export class UserModule {}

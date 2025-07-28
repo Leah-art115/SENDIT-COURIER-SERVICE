@@ -1,6 +1,10 @@
 @baseUrl = http://localhost:3000/api
 
-### 🔑 Admin Login
+#######################################################
+### 👤 AUTH SECTION
+#######################################################
+
+### 🔐 Admin Login
 POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
@@ -15,79 +19,148 @@ Content-Type: application/json
 
 {
   "name": "John Doe",
-  "email": "johndoech@example.com",
+  "email": "user@example.com",
   "phone": "0712345678",
-  "password": "password123"
+  "password": "userpass123"
 }
 
-### 🔐 Login as User
+### 🔐 User Login
 POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "johndoech@example.com",
-  "password": "password123"
+  "email": "user@example.com",
+  "password": "userpass123"
 }
 
-### 🛵 Create Driver (Admin only)
+### 🛵 Admin Creates a Driver
 POST {{baseUrl}}/auth/create-driver
 Content-Type: application/json
-Authorization: Bearer {{ADMIN_TOKEN}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiYWRtaW5Ac2VuZGl0LmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc1MzM0NzIyNCwiZXhwIjoxNzUzOTUyMDI0fQ.g0EF8167ZOAVvgG1buNtfdNQZco7vZh8NbijL_tihrE
 
 {
-  "name": "Rider One",
-  "email": "driver2@example.com",
-  "password": "driverpassword",
+  "name": "My Driver",
+  "email": "mydriver@example.com",
+  "password": "driverpass",
   "mode": "MOTORCYCLE"
 }
 
-### 🛵 Login as Driver
+### 🛵 Driver Login
 POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "driver2@example.com",
-  "password": "driverpassword"
+  "email": "mydriver@example.com",
+  "password": "driverpass"
 }
 
-### 🧑‍✈️ Admin Gets All Drivers
-GET {{baseUrl}}/admin/drivers
-Authorization: Bearer {{ADMIN_TOKEN}}
+#######################################################
+### 📦 PARCEL OPERATIONS
+#######################################################
 
-### 📦 Admin Gets All Parcels
+### 📦 User/Admin Creates a Parcel
+POST {{baseUrl}}/parcels
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiYWRtaW5Ac2VuZGl0LmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc1MzM0NzIyNCwiZXhwIjoxNzUzOTUyMDI0fQ.g0EF8167ZOAVvgG1buNtfdNQZco7vZh8NbijL_tihrE
+
+{
+  "senderName": "John Doech",
+  "senderEmail": "user@example.com",
+  "receiverName": "Jane Smith",
+  "receiverEmail": "jane@example.com",
+  "from": "Nairobi CBD",
+  "to": "Westlands, Nairobi",
+  "type": "ENVELOPE",
+  "weight": 2.5,
+  "mode": "STANDARD",
+  "description": "Glassware"
+}
+
+### 📦 Get All Parcels (Admin)
 GET {{baseUrl}}/parcels
-Authorization: Bearer {{ADMIN_TOKEN}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiYWRtaW5Ac2VuZGl0LmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc1MzM0NzIyNCwiZXhwIjoxNzUzOTUyMDI0fQ.g0EF8167ZOAVvgG1buNtfdNQZco7vZh8NbijL_tihrE
 
-### 🚚 Admin Assigns Parcel to Driver
-PATCH {{baseUrl}}/parcels/{{PARCEL_ID}}/assign-driver
+### 📦 Get Parcel by ID
+GET {{baseUrl}}/parcels/1e846c34-d9d1-4a85-8c4e-3ce0d11f224e
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiYWRtaW5Ac2VuZGl0LmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc1MzM0NzIyNCwiZXhwIjoxNzUzOTUyMDI0fQ.g0EF8167ZOAVvgG1buNtfdNQZco7vZh8NbijL_tihrE
+
+### 📜 Get Parcel Status History
+GET {{baseUrl}}/parcels/1e846c34-d9d1-4a85-8c4e-3ce0d11f224e/status-history
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiYWRtaW5Ac2VuZGl0LmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc1MzM0NzIyNCwiZXhwIjoxNzUzOTUyMDI0fQ.g0EF8167ZOAVvgG1buNtfdNQZco7vZh8NbijL_tihrE
+
+#######################################################
+### 🚚 ASSIGNMENT & DELIVERY
+#######################################################
+
+### ✅ Admin Assigns Parcel to Driver
+PATCH {{baseUrl}}/parcels/d82df277-0ce9-45d0-b330-ee28646fd1dd/assign-driver
 Content-Type: application/json
-Authorization: Bearer {{ADMIN_TOKEN}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiYWRtaW5Ac2VuZGl0LmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc1MzM0NzIyNCwiZXhwIjoxNzUzOTUyMDI0fQ.g0EF8167ZOAVvgG1buNtfdNQZco7vZh8NbijL_tihrE
 
 {
-  "driverId": "{{DRIVER_ID}}"
+  "driverId": 5
 }
 
-### 📦 Driver Gets Their Assigned Parcels
+### ❌ Admin Unassigns Driver
+PATCH {{baseUrl}}/parcels/1e846c34-d9d1-4a85-8c4e-3ce0d11f224e/unassign-driver
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiYWRtaW5Ac2VuZGl0LmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc1MzM0NzIyNCwiZXhwIjoxNzUzOTUyMDI0fQ.g0EF8167ZOAVvgG1buNtfdNQZco7vZh8NbijL_tihrE
+
+#######################################################
+### 🧑‍✈️ DRIVER ACTIONS
+#######################################################
+
+### 📦 Driver Views Assigned Parcels
 GET {{baseUrl}}/driver/my-parcels
-Authorization: Bearer {{DRIVER_TOKEN}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjUsImVtYWlsIjoibXlkcml2ZXJAZXhhbXBsZS5jb20iLCJyb2xlIjoiRFJJVkVSIiwiaWF0IjoxNzUzMzQ3MzIwLCJleHAiOjE3NTM5NTIxMjB9.kty6C7mQhyhW9v8xOMFC5GDnL__PlPU9YoeTyDVD1TI
 
-### 📍 Driver Updates Location for Specific Parcel
-PATCH {{baseUrl}}/driver/location/{{PARCEL_ID}}
+###
+### ✅ Correct
+PATCH {{baseUrl}}/driver/mark-picked-up/1e846c34-d9d1-4a85-8c4e-3ce0d11f224e
 Content-Type: application/json
-Authorization: Bearer {{DRIVER_TOKEN}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjUsImVtYWlsIjoibXlkcml2ZXJAZXhhbXBsZS5jb20iLCJyb2xlIjoiRFJJVkVSIiwiaWF0IjoxNzUzMzQ3MzIwLCJleHAiOjE3NTM5NTIxMjB9.kty6C7mQhyhW9v8xOMFC5GDnL__PlPU9YoeTyDVD1TI
+
+
+
+### 📍 Driver Updates Real-Time Location
+PATCH {{baseUrl}}/driver/location/d82df277-0ce9-45d0-b330-ee28646fd1dd
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjUsImVtYWlsIjoibXlkcml2ZXJAZXhhbXBsZS5jb20iLCJyb2xlIjoiRFJJVkVSIiwiaWF0IjoxNzUzMzQ3MzIwLCJleHAiOjE3NTM5NTIxMjB9.kty6C7mQhyhW9v8xOMFC5GDnL__PlPU9YoeTyDVD1TI
 
 {
-  "location": "Westlands, Nairobi"
+  "location": "Eldoret, Kenya",
 }
 
-### 🚚 Driver Marks Parcel as Picked Up
-PATCH {{baseUrl}}/driver/mark-picked-up/{{PARCEL_ID}}
-Authorization: Bearer {{DRIVER_TOKEN}}
+### 🟢 Driver Marks Parcel as Picked Up
+PATCH {{baseUrl}}/driver/mark-picked-up/1e846c34-d9d1-4a85-8c4e-3ce0d11f224e
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjUsImVtYWlsIjoibXlkcml2ZXJAZXhhbXBsZS5jb20iLCJyb2xlIjoiRFJJVkVSIiwiaWF0IjoxNzUzMzQ3MzIwLCJleHAiOjE3NTM5NTIxMjB9.kty6C7mQhyhW9v8xOMFC5GDnL__PlPU9YoeTyDVD1TI
 
-### 📥 User Marks Parcel as Collected
-PATCH {{baseUrl}}/user/mark-collected/{{PARCEL_ID}}
-Authorization: Bearer {{USER_TOKEN}}
+#######################################################
+### 👥 USER ACTIONS (SENDER / RECEIVER)
+#######################################################
 
-### 📤 User Marks Parcel as Picked Up by Driver
-PATCH {{baseUrl}}/user/mark-driver-picked-up/{{PARCEL_ID}}
-Authorization: Bearer {{USER_TOKEN}}
+### 📤 User Marks as Picked Up by Driver
+PATCH {{baseUrl}}/user/mark-driver-picked-up/1e846c34-d9d1-4a85-8c4e-3ce0d11f224e
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjksImVtYWlsIjoidXNlckBleGFtcGxlLmNvbSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzUzMzUwMTk2LCJleHAiOjE3NTM5NTQ5OTZ9.1zGG7KYicU4q6OgwFcSK574NZQzZEyv4Z3UsYSy1MYA
+### 📥 User Marks as Collected by Receiver
+PATCH {{baseUrl}}/user/mark-collected/1e846c34-d9d1-4a85-8c4e-3ce0d11f224e
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjksImVtYWlsIjoidXNlckBleGFtcGxlLmNvbSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzUzMzUwMTk2LCJleHAiOjE3NTM5NTQ5OTZ9.1zGG7KYicU4q6OgwFcSK574NZQzZEyv4Z3UsYSy1MYA
+#######################################################
+### 👮 ADMIN MANAGEMENT
+#######################################################
+
+### 🧑‍✈️ Get All Drivers
+GET {{baseUrl}}/admin/drivers
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiYWRtaW5Ac2VuZGl0LmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc1MzM0NzIyNCwiZXhwIjoxNzUzOTUyMDI0fQ.g0EF8167ZOAVvgG1buNtfdNQZco7vZh8NbijL_tihrE
+
+### 📦 Get All Parcels (Admin)
+GET {{baseUrl}}/admin/parcels
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiYWRtaW5Ac2VuZGl0LmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc1MzM0NzIyNCwiZXhwIjoxNzUzOTUyMDI0fQ.g0EF8167ZOAVvgG1buNtfdNQZco7vZh8NbijL_tihrE
+
+### 📜 Admin Gets Parcel Status History
+GET {{baseUrl}}/admin/parcel/1e846c34-d9d1-4a85-8c4e-3ce0d11f224e/status-history
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiYWRtaW5Ac2VuZGl0LmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc1MzM0NzIyNCwiZXhwIjoxNzUzOTUyMDI0fQ.g0EF8167ZOAVvgG1buNtfdNQZco7vZh8NbijL_tihrE
+
+### 🔍 Admin Gets Driver by ID
+GET {{baseUrl}}/admin/driver/5
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiYWRtaW5Ac2VuZGl0LmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc1MzM0NzIyNCwiZXhwIjoxNzUzOTUyMDI0fQ.g0EF8167ZOAVvgG1buNtfdNQZco7vZh8NbijL_tihrE
+

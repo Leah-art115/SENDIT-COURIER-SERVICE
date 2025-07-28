@@ -7,20 +7,27 @@
 
   <select [(ngModel)]="filterStatus">
     <option value="">All Statuses</option>
-    <option>In Transit</option>
-    <option>Delivered</option>
+    <option value="PENDING">Pending</option>
+    <option value="ASSIGNED">Assigned</option>
+    <option value="PICKED_UP_BY_DRIVER">Picked Up</option>
+    <option value="IN_TRANSIT">In Transit</option>
+    <option value="DELIVERED">Delivered</option>
+    <option value="COLLECTED_BY_RECEIVER">Collected</option>
+    <option value="CANCELLED">Cancelled</option>
   </select>
 
   <select [(ngModel)]="filterMode">
     <option value="">All Modes</option>
-    <option>Express</option>
-    <option>Standard</option>
+    <option value="STANDARD">Standard</option>
+    <option value="EXPRESS">Express</option>
   </select>
 
   <select [(ngModel)]="filterType">
     <option value="">All Types</option>
-    <option>Box</option>
-    <option>Bag</option>
+    <option value="BOXED_PACKAGE">Box</option>
+    <option value="ENVELOPE">Envelope</option>
+    <option value="BAG">Bag</option>
+    <option value="SUITCASE">Suitcase</option>
   </select>
 </div>
 
@@ -31,6 +38,7 @@
     <p><strong>From:</strong> {{ p.from }} → <strong>To:</strong> {{ p.to }}</p>
     <p><strong>Date Sent:</strong> {{ p.dateSent }}</p>
     <p><strong>Status:</strong> {{ p.status }}</p>
+    <p><strong>Price:</strong> {{ p.price }}</p> <!-- Added -->
     <button (click)="openMap(p)">Track</button>
     <button (click)="openInfo(p)">View More Info</button>
   </div>
@@ -58,6 +66,7 @@
     <p><strong>Payment Method:</strong> {{ selectedParcel?.paymentMethod }}</p>
     <p><strong>Delivery Mode:</strong> {{ selectedParcel?.deliveryMode }}</p>
     <p><strong>Expected Delivery:</strong> {{ selectedParcel?.expectedDelivery }}</p>
+    <p><strong>Price:</strong> {{ selectedParcel?.price }}</p> <!-- Added -->
     <button (click)="closeModals()">Close</button>
   </div>
 </div>

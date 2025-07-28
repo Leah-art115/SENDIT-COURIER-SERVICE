@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DriverNavbarComponent } from '../driver-navbar/driver-navbar.component';
+import { DriverService, DriverProfile } from '../../../services/driver.service';
 
 @Component({
   selector: 'app-driver-profile',
@@ -10,19 +11,42 @@ import { DriverNavbarComponent } from '../driver-navbar/driver-navbar.component'
   templateUrl: './driver-profile.component.html',
   styleUrls: ['./driver-profile.component.css']
 })
-export class DriverProfileComponent {
-  driver = {
-    name: 'Leah Achieng',
-    email: 'leah.driver@sendit.com',
-    mode: 'Motorcycle',
-    status: 'Available',
-    joined: '2025-05-12'
+export class DriverProfileComponent implements OnInit {
+  driver: any = {
+    name: '',
+    email: '',
+    mode: '',
+    status: '',
+    joined: ''
   };
 
   showPasswordModal = false;
   oldPassword = '';
   newPassword = '';
   confirmPassword = '';
+
+  constructor(private driverService: DriverService) {}
+
+  ngOnInit(): void {
+    this.loadDriverProfile();
+  }
+
+  loadDriverProfile(): void {
+    this.driverService.getDriverProfile().subscribe({
+      next: (profile) => {
+        this.driver = {
+          name: profile.name,
+          email: profile.email,
+          mode: profile.mode || 'N/A',
+          status: profile.status || 'N/A',
+          joined: profile.createdAt ? new Date(profile.createdAt).toDateString() : 'N/A'
+        };
+      },
+      error: (error) => {
+        console.error('Error loading driver profile:', error);
+      }
+    });
+  }
 
   openPasswordModal(): void {
     this.showPasswordModal = true;

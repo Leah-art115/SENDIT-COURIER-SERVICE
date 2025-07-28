@@ -30,27 +30,35 @@
 
 <div class="parcel-cards">
   <div class="card" *ngFor="let p of paginatedParcels">
-
-    <h3>{{ p.id }}</h3>
-    <p><strong>Sender:</strong> {{ p.sender }}</p>
-    <p><strong>Receiver:</strong> {{ p.receiver }}</p>
+    <h3>{{ p.trackingId }}</h3>
+    <p><strong>Sender:</strong> {{ p.senderName }}</p>
+    <p><strong>Receiver:</strong> {{ p.receiverName }}</p>
     <p><strong>Status:</strong> {{ p.status }}</p>
     <p><strong>From:</strong> {{ p.from }} → <strong>To:</strong> {{ p.to }}</p>
-    
+
     <!-- Driver Assignment Section -->
     <div class="driver-section">
-      <div *ngIf="!p.assignedDriver" class="driver-assignment">
-        <label class="driver-label">Assign Driver:</label>
-        <select class="driver-select" [disabled]="availableDrivers.length === 0" (change)="assignDriver(p, $event)">
-          <option value="">{{ availableDrivers.length === 0 ? 'No available drivers' : 'Select a driver' }}</option>
-          <option *ngFor="let driver of availableDrivers" [value]="driver.id">{{ driver.name }}</option>
-        </select>
-      </div>
-      
-      <div *ngIf="p.assignedDriver" class="assigned-driver">
-        <p class="driver-info"><strong>Assigned Driver:</strong> {{ p.assignedDriver.name }}</p>
+      <ng-container *ngIf="p.assignedDriver; else assignBlock">
+        <p class="driver-info">
+          <strong>Assigned Driver:</strong> {{ p.assignedDriver.name }}
+        </p>
         <button class="unassign-btn" (click)="confirmUnassign(p)">Unassign</button>
-      </div>
+      </ng-container>
+
+      <ng-template #assignBlock>
+        <div *ngIf="availableDrivers.length > 0; else noDriversCard">
+          <label class="driver-label">Assign Driver:</label>
+          <select class="driver-select" (change)="assignDriver(p, $event)">
+            <option value="">Select a driver</option>
+            <option *ngFor="let driver of availableDrivers" [value]="driver.id">
+              {{ driver.name }}
+            </option>
+          </select>
+        </div>
+        <ng-template #noDriversCard>
+          <p>No drivers available</p>
+        </ng-template>
+      </ng-template>
     </div>
 
     <div class="card-actions">
@@ -61,53 +69,69 @@
 </div>
 
 <!-- MAP MODAL -->
-<div class="modal" *ngIf="showMapModal">
+<div class="modal" *ngIf="showMapModal && selectedParcel">
   <div class="modal-content">
-    <h3>Tracking Map - {{ selectedParcel?.id }}</h3>
+    <h3>Tracking Map - {{ selectedParcel.trackingId }}</h3>
     <div id="google-map" class="map-container"></div>
     <button (click)="closeModals()">Close</button>
   </div>
 </div>
 
 <!-- INFO MODAL -->
-<div class="modal" *ngIf="showInfoModal">
+<div class="modal" *ngIf="showInfoModal && selectedParcel">
   <div class="modal-content">
-    <h3>Parcel Details - {{ selectedParcel?.id }}</h3>
-    <p><strong>Sender:</strong> {{ selectedParcel?.sender }}</p>
-    <p><strong>Receiver:</strong> {{ selectedParcel?.receiver }}</p>
-    <p><strong>From:</strong> {{ selectedParcel?.from }} → <strong>To:</strong> {{ selectedParcel?.to }}</p>
-    <p><strong>Status:</strong> {{ selectedParcel?.status }}</p>
-    <p><strong>Type:</strong> {{ selectedParcel?.type }}</p>
-    <p><strong>Mode:</strong> {{ selectedParcel?.mode }}</p>
-    <p><strong>Weight:</strong> {{ selectedParcel?.weight }}</p>
-    <p><strong>Description:</strong> {{ selectedParcel?.description }}</p>
-    <p><strong>Date Sent:</strong> {{ selectedParcel?.dateSent }}</p>
-    
+    <h3>Parcel Details - {{ selectedParcel.trackingId }}</h3>
+    <p><strong>Sender:</strong> {{ selectedParcel.senderName }}</p>
+    <p><strong>Receiver:</strong> {{ selectedParcel.receiverName }}</p>
+    <p><strong>From:</strong> {{ selectedParcel.from }} → <strong>To:</strong> {{ selectedParcel.to }}</p>
+    <p><strong>Status:</strong> {{ selectedParcel.status }}</p>
+    <p><strong>Type:</strong> {{ selectedParcel.type }}</p>
+    <p><strong>Mode:</strong> {{ selectedParcel.mode }}</p>
+    <p><strong>Weight:</strong> {{ selectedParcel.weight }}</p>
+    <p><strong>Description:</strong> {{ selectedParcel.description }}</p>
+    <p><strong>Date Sent:</strong> {{ selectedParcel.dateSent }}</p>
+
     <!-- Driver Assignment in Modal -->
     <div class="modal-driver-section">
-      <div *ngIf="!selectedParcel?.assignedDriver" class="driver-assignment">
-        <label class="driver-label">Assign Driver:</label>
-        <select class="driver-select" [disabled]="availableDrivers.length === 0" (change)="assignDriver(selectedParcel!, $event)">
-          <option value="">{{ availableDrivers.length === 0 ? 'No available drivers' : 'Select a driver' }}</option>
-          <option *ngFor="let driver of availableDrivers" [value]="driver.id">{{ driver.name }}</option>
-        </select>
-      </div>
-      
-      <div *ngIf="selectedParcel?.assignedDriver" class="assigned-driver">
-        <p class="driver-info"><strong>Assigned Driver:</strong> {{ selectedParcel?.assignedDriver?.name }}</p>
-        <button class="unassign-btn" (click)="confirmUnassign(selectedParcel!)">Unassign</button>
-      </div>
+      <ng-container *ngIf="selectedParcel.assignedDriver; else assignModalBlock">
+        <p class="driver-info">
+          <strong>Assigned Driver:</strong> {{ selectedParcel.assignedDriver.name }}
+        </p>
+        <button class="unassign-btn" (click)="confirmUnassign(selectedParcel)">Unassign</button>
+      </ng-container>
+
+      <ng-template #assignModalBlock>
+        <div *ngIf="availableDrivers.length > 0; else noDriversModal">
+          <label class="driver-label">Assign Driver:</label>
+          <select class="driver-select" (change)="assignDriver(selectedParcel!, $event)">
+            <option value="">Select a driver</option>
+            <option *ngFor="let driver of availableDrivers" [value]="driver.id">
+              {{ driver.name }}
+            </option>
+          </select>
+        </div>
+        <ng-template #noDriversModal>
+          <p class="no-drivers-text">No available drivers</p>
+        </ng-template>
+      </ng-template>
     </div>
-    
+
     <button (click)="closeModals()">Close</button>
   </div>
 </div>
 
 <!-- CONFIRMATION MODAL -->
-<div class="modal confirmation-modal" *ngIf="showConfirmModal">
+<div class="modal confirmation-modal" *ngIf="showConfirmModal && parcelToUnassign">
   <div class="modal-content confirmation-content">
     <h3>Confirm Unassignment</h3>
-    <p>Are you sure you want to unassign <strong>{{ parcelToUnassign?.assignedDriver?.name }}</strong> from parcel <strong>{{ parcelToUnassign?.id }}</strong>?</p>
+    <ng-container *ngIf="parcelToUnassign.assignedDriver">
+      <p>
+        Are you sure you want to unassign
+        <strong>{{ parcelToUnassign.assignedDriver.name }}</strong>
+        from parcel
+        <strong>{{ parcelToUnassign.trackingId }}</strong>?
+      </p>
+    </ng-container>
     <div class="confirmation-buttons">
       <button class="cancel-btn" (click)="cancelUnassign()">Cancel</button>
       <button class="confirm-btn" (click)="unassignDriver()">Yes, Unassign</button>

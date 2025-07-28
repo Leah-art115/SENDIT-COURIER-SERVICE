@@ -424,3 +424,107 @@ select:focus-visible {
 .modal-content::-webkit-scrollbar-thumb:hover {
   background: var(--primary-hover);
 }
+
+/* Profile Picture Styles */
+.profile-picture {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 20px;
+}
+
+.image-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.image-container img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: opacity 0.2s ease;
+}
+
+.image-container:hover img {
+  opacity: 0.8;
+}
+
+.camera-icon {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  background: #007bff;
+  color: white;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: background 0.2s ease;
+}
+
+.camera-icon:hover {
+  background: #0056b3;
+}
+
+.remove-icon {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #dc3545;
+  color: white;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: background 0.2s ease;
+}
+
+.remove-icon:hover {
+  background: #c82333;
+}
+
+.empty-profile-picture {
+  width: 100%;
+  height: 100%;
+  border: 2px dashed #dee2e6;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: #f8f9fa;
+  transition: all 0.2s ease;
+  color: #6c757d;
+}
+
+.empty-profile-picture:hover {
+  border-color: #007bff;
+  background: #e7f3ff;
+  color: #007bff;
+}
+
+.add-photo-icon {
+  font-size: 24px;
+  margin-bottom: 5px;
+}
+
+.empty-profile-picture span {
+  font-size: 12px;
+  font-weight: 500;
+}

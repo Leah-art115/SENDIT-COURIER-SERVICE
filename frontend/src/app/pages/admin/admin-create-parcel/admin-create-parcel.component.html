@@ -5,59 +5,68 @@
       <label>Sender Name</label>
       <input type="text" formControlName="senderName" />
     </div>
+
     <div class="form-group">
       <label>Sender Email</label>
       <input type="email" formControlName="senderEmail" />
     </div>
+
     <div class="form-group">
       <label>Receiver Name</label>
       <input type="text" formControlName="receiverName" />
     </div>
+
     <div class="form-group">
       <label>Receiver Email</label>
       <input type="email" formControlName="receiverEmail" />
     </div>
+
     <div class="form-group">
       <label>From</label>
       <input type="text" formControlName="from" />
     </div>
+
     <div class="form-group">
       <label>To</label>
       <input type="text" formControlName="to" />
     </div>
+
     <div class="form-group">
       <label>Parcel Type</label>
       <select formControlName="type">
         <option value="">Select type</option>
-        <option>Boxed package</option>
-        <option>Envelope</option>
-        <option>Bag</option>
+        <option value="ENVELOPE">Envelope</option>
+        <option value="BOXED_PACKAGE">Boxed Package</option>
+        <option value="BAG">Bag</option>
+        <option value="SUITCASE">Suitcase</option>
       </select>
     </div>
+
     <div class="form-group">
       <label>Weight (kg)</label>
-      <input type="number" formControlName="weight" step="0.001" min="0.001"/>
+      <input type="number" formControlName="weight" step="0.001" min="0.001" />
     </div>
+
     <div class="form-group">
       <label>Mode</label>
       <select formControlName="mode">
         <option value="">Select mode</option>
-        <option>Standard</option>
-        <option>Express</option>
+        <option value="STANDARD">Standard</option>
+        <option value="EXPRESS">Express</option>
       </select>
     </div>
+
     <div class="form-group">
       <label>Description</label>
       <textarea formControlName="description"></textarea>
     </div>
-    <div class="form-group">
-      <label>Tracking ID</label>
-      <input type="text" formControlName="trackingId" readonly />
-    </div>
-    <div class="form-group">
-      <label>Price (auto-calculated)</label>
-      <input type="text" formControlName="price" readonly />
-    </div>
+
     <button type="submit" [disabled]="form.invalid">Create Parcel</button>
+
+    <div *ngIf="submittedParcel" class="parcel-summary">
+      <h3>Parcel Created ✅</h3>
+      <p><strong>Tracking ID:</strong> {{ submittedParcel.trackingId }}</p>
+      <p><strong>Price:</strong> KSH {{ submittedParcel.price }}</p>
+    </div>
   </form>
 </div>

@@ -6,11 +6,11 @@
   <!-- Status Filter -->
   <select [(ngModel)]="statusFilter" class="status-filter">
     <option value="">All Statuses</option>
-    <option value="Available">Available</option>
-    <option value="On Delivery">On Delivery</option>
-    <option value="Out Sick">Out Sick</option>
-    <option value="On Leave">On Leave</option>
-    <option value="Suspended">Suspended</option>
+    <option value="AVAILABLE">Available</option>
+    <option value="ON_DELIVERY">On Delivery</option>
+    <option value="OUT_SICK">Out Sick</option>
+    <option value="ON_LEAVE">On Leave</option>
+    <option value="SUSPENDED">Suspended</option>
   </select>
 
   <!-- View Toggle -->
@@ -26,10 +26,10 @@
 <!-- Bulk Actions (when drivers are selected) -->
 <div class="bulk-actions" *ngIf="selectedDriverIds.length > 0">
   <span>{{ selectedDriverIds.length }} drivers selected</span>
-  <button (click)="bulkStatusChange('Available')" class="bulk-btn">Set Available</button>
-  <button (click)="bulkStatusChange('Out Sick')" class="bulk-btn">Set Out Sick</button>
-  <button (click)="bulkStatusChange('On Leave')" class="bulk-btn">Set On Leave</button>
-  <button (click)="bulkStatusChange('Suspended')" class="bulk-btn">Suspend</button>
+  <button (click)="bulkStatusChange('AVAILABLE')" class="bulk-btn">Set Available</button>
+  <button (click)="bulkStatusChange('OUT_SICK')" class="bulk-btn">Set Out Sick</button>
+  <button (click)="bulkStatusChange('ON_LEAVE')" class="bulk-btn">Set On Leave</button>
+  <button (click)="bulkStatusChange('SUSPENDED')" class="bulk-btn">Suspend</button>
   <button (click)="clearSelection()" class="clear-btn">Clear Selection</button>
 </div>
 
@@ -67,7 +67,7 @@
         <td>{{ driver.mode }}</td>
         <td>
           <span class="status" [ngClass]="getStatusClass(driver.status)">
-            {{ driver.status }}
+            {{ getStatusDisplayName(driver.status) }}
           </span>
         </td>
         <td>
@@ -107,14 +107,14 @@
     <input [(ngModel)]="newDriver.email" type="email" placeholder="Enter email address" />
     
     <label>Password:</label>
-    <input type="password" placeholder="Enter password" />
+    <input [(ngModel)]="newDriver.password" type="password" placeholder="Enter password" />
     
     <label>Courier Mode:</label>
     <select [(ngModel)]="newDriver.mode">
-      <option value="Bicycle"> Bicycle</option>
-      <option value="Skates">Skates</option>
-      <option value="Motorcycle"> Motorcycle</option>
-      <option value="Car"> Car</option>
+      <option value="BICYCLE">Bicycle</option>
+      <option value="SKATES">Skates</option>
+      <option value="MOTORCYCLE">Motorcycle</option>
+      <option value="CAR">Car</option>
     </select>
     
     <div class="modal-actions">
@@ -136,18 +136,18 @@
     
     <label>Courier Mode:</label>
     <select [(ngModel)]="editDriver.mode">
-      <option value="Bicycle">Bicycle</option>
-      <option value="Skates">Skates</option>
-      <option value="Motorcycle"> Motorcycle</option>
-      <option value="Car">Car</option>
+      <option value="BICYCLE">Bicycle</option>
+      <option value="SKATES">Skates</option>
+      <option value="MOTORCYCLE">Motorcycle</option>
+      <option value="CAR">Car</option>
     </select>
     
     <label>Status:</label>
     <select [(ngModel)]="editDriver.status" (change)="onStatusChange()">
-      <option value="Available"> Available</option>
-      <option value="Out Sick">Out Sick</option>
-      <option value="On Leave"> On Leave</option>
-      <option value="Suspended"> Suspended</option>
+      <option value="AVAILABLE">Available</option>
+      <option value="OUT_SICK">Out Sick</option>
+      <option value="ON_LEAVE">On Leave</option>
+      <option value="SUSPENDED">Suspended</option>
     </select>
     
     <div class="status-info">
@@ -165,39 +165,70 @@
 </div>
 
 <!-- Status Change Modal -->
-<div class="modal" *ngIf="showStatusModal">
+<!-- <div class="modal" *ngIf="showStatusModal">
   <div class="modal-content">
     <h3>Change Driver Status</h3>
     <p>Change status for <strong>{{ selectedDriver?.name }}</strong></p>
+    <p>Current tempStatus: {{ tempStatus }}</p>
     
     <div class="status-options">
       <label class="status-option">
-        <input type="radio" [(ngModel)]="tempStatus" value="Available" name="status">
+        <input
+          type="radio"
+          [(ngModel)]="tempStatus"
+          value="AVAILABLE"
+          name="driverStatus"
+          (change)="onTempStatusChange($event)"
+        >
         <span>Available - Can receive new deliveries</span>
       </label>
       
       <label class="status-option">
-        <input type="radio" [(ngModel)]="tempStatus" value="Out Sick" name="status">
+        <input
+          type="radio"
+          [(ngModel)]="tempStatus"
+          value="OUT_SICK"
+          name="driverStatus"
+          (change)="onTempStatusChange($event)"
+        >
         <span>Out Sick - Temporarily unavailable</span>
       </label>
       
       <label class="status-option">
-        <input type="radio" [(ngModel)]="tempStatus" value="On Leave" name="status">
+        <input
+          type="radio"
+          [(ngModel)]="tempStatus"
+          value="ON_LEAVE"
+          name="driverStatus"
+          (change)="onTempStatusChange($event)"
+        >
         <span>On Leave - Scheduled time off</span>
       </label>
       
       <label class="status-option">
-        <input type="radio" [(ngModel)]="tempStatus" value="Suspended" name="status">
+        <input
+          type="radio"
+          [(ngModel)]="tempStatus"
+          value="SUSPENDED"
+          name="driverStatus"
+          (change)="onTempStatusChange($event)"
+        >
         <span>Suspended - Account restricted</span>
       </label>
     </div>
     
     <div class="modal-actions">
-      <button class="save-btn" (click)="changeDriverStatus()">Change Status</button>
+      <button
+        class="save-btn"
+        (click)="changeDriverStatus()"
+        [disabled]="!selectedDriver"
+      >
+        Change Status
+      </button>
       <button class="cancel-btn" (click)="closeStatusModal()">Cancel</button>
     </div>
   </div>
-</div>
+</div> -->
 
 <!-- Action Modal -->
 <div class="modal small" *ngIf="showActionModal">
@@ -209,13 +240,13 @@
         Edit Details
       </button>
       
-      <button (click)="openStatusModal(selectedDriver!)">
+      <!-- <button (click)="openStatusModal(selectedDriver!)">
         Change Status
-      </button>
+      </button> -->
       
       <button (click)="suspendDriver(selectedDriver!)" 
-              [disabled]="selectedDriver?.status === 'Suspended'">
-        {{ selectedDriver?.status === 'Suspended' ? 'Already Suspended' : 'Suspend Driver' }}
+              [disabled]="selectedDriver?.status === 'SUSPENDED'">
+        {{ selectedDriver?.status === 'SUSPENDED' ? 'Already Suspended' : 'Suspend Driver' }}
       </button>
       
       <button (click)="confirmDeleteDriver(selectedDriver!)" class="delete-btn">

@@ -1,22 +1,56 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable prettier/prettier */
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuthService } from '../auth/auth.service';
 import { CreateParcelDto } from './dto/create-parcel.dto';
 import { generateUniqueTrackingId } from './utils/tracking-id';
 import { calculateParcelPrice } from './utils/price-calculator';
 import { ParcelStatus } from '@prisma/client';
 import axios from 'axios';
+import { geocodeLocationWithFallback } from 'src/common/utils/geocode';
 
 @Injectable()
 export class ParcelService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private authService: AuthService,
+  ) {}
 
   async createParcel(dto: CreateParcelDto) {
+    const duplicate = await this.prisma.parcel.findFirst({
+      where: {
+        senderName: dto.senderName,
+        senderEmail: dto.senderEmail,
+        receiverName: dto.receiverName,
+        receiverEmail: dto.receiverEmail,
+        from: dto.from,
+        to: dto.to,
+        weight: dto.weight,
+        mode: dto.mode,
+        type: dto.type,
+        description: dto.description ?? null,
+      },
+    });
+
+    if (duplicate) {
+      throw new ConflictException('An identical parcel already exists');
+    }
+
     const trackingId = await generateUniqueTrackingId(this.prisma);
     const distance = await this.getDistanceInKm(dto.from, dto.to);
     const price = calculateParcelPrice(dto.type, dto.weight, distance, dto.mode);
+    console.log('Calculated price for parcel:', { trackingId, price, type: dto.type, weight: dto.weight, distance, mode: dto.mode }); // Debug log
+
+    const destinationCoords = await geocodeLocationWithFallback(dto.to);
+    const fromCoords = await geocodeLocationWithFallback(dto.from);
 
     const parcel = await this.prisma.parcel.create({
       data: {
@@ -34,6 +68,10 @@ export class ParcelService {
         description: dto.description,
         price,
         status: ParcelStatus.PENDING,
+        fromLat: fromCoords.lat,
+        fromLng: fromCoords.lng,
+        destinationLat: destinationCoords.lat,
+        destinationLng: destinationCoords.lng,
       },
     });
 
@@ -111,11 +149,11 @@ export class ParcelService {
     });
 
     if (!parcel) {
-      throw new Error('Parcel not found');
+      throw new NotFoundException('Parcel not found');
     }
 
     if (parcel.driverId !== driverId) {
-      throw new Error('You are not assigned to this parcel');
+      throw new BadRequestException('You are not assigned to this parcel');
     }
 
     const updatedParcel = await this.prisma.parcel.update({
@@ -123,7 +161,6 @@ export class ParcelService {
       data: {
         status: newStatus,
         pickedAt: newStatus === ParcelStatus.PICKED_UP_BY_DRIVER ? now : undefined,
-
         deliveredAt: newStatus === ParcelStatus.DELIVERED ? now : undefined,
       },
     });
@@ -143,14 +180,148 @@ export class ParcelService {
     const parcel = await this.prisma.parcel.findUnique({ where: { id: parcelId } });
 
     if (!parcel) {
-      throw new Error('Parcel not found');
+      throw new NotFoundException('Parcel not found');
     }
 
-    return this.prisma.parcel.update({
+    if (parcel.status !== ParcelStatus.PENDING) {
+      throw new ConflictException(
+        `Cannot assign driver: parcel is already in status "${parcel.status}"`,
+      );
+    }
+
+    const driver = await this.prisma.driver.findUnique({ where: { id: driverId } });
+
+    if (!driver) {
+      throw new NotFoundException('Driver not found');
+    }
+
+    if (
+      driver.status !== 'AVAILABLE' ||
+      !driver.canReceiveAssignments
+    ) {
+      throw new BadRequestException(
+        'Driver is not available for new assignments',
+      );
+    }
+
+    const updatedParcel = await this.prisma.parcel.update({
       where: { id: parcelId },
       data: {
         driverId,
+        status: ParcelStatus.ASSIGNED,
+        updatedAt: new Date(),
       },
     });
+
+    await this.prisma.driver.update({
+      where: { id: driverId },
+      data: {
+        status: 'ON_DELIVERY',
+        canReceiveAssignments: false,
+      },
+    });
+
+    await this.prisma.parcelStatusLog.create({
+      data: {
+        parcelId,
+        status: ParcelStatus.ASSIGNED,
+      },
+    });
+
+    return updatedParcel;
+  }
+
+  async unassignDriver(parcelId: string) {
+    const parcel = await this.prisma.parcel.findUnique({
+      where: { id: parcelId },
+    });
+
+    if (!parcel) {
+      throw new NotFoundException('Parcel not found');
+    }
+
+    if (!parcel.driverId) {
+      throw new BadRequestException('Parcel is not assigned to any driver');
+    }
+
+    if (parcel.status === ParcelStatus.DELIVERED) {
+      throw new ConflictException('Cannot unassign driver from a delivered parcel');
+    }
+
+    const updatedParcel = await this.prisma.parcel.update({
+      where: { id: parcelId },
+      data: {
+        driverId: null,
+        status: ParcelStatus.PENDING,
+        updatedAt: new Date(),
+      },
+    });
+
+    await this.prisma.driver.update({
+      where: { id: parcel.driverId },
+      data: {
+        status: 'AVAILABLE',
+        canReceiveAssignments: true,
+      },
+    });
+
+    await this.prisma.parcelStatusLog.create({
+      data: {
+        parcelId,
+        status: ParcelStatus.PENDING,
+      },
+    });
+
+    return updatedParcel;
+  }
+
+  async getDashboardMetrics() {
+    const [totalEarnings, totalUsers, parcelsInTransit, parcelsDelivered, recentParcels] = await Promise.all([
+      this.prisma.parcel.aggregate({
+        where: { status: ParcelStatus.DELIVERED },
+        _sum: { price: true },
+      }),
+      this.authService.getTotalUsers(),
+      this.prisma.parcel.count({
+        where: { status: ParcelStatus.IN_TRANSIT },
+      }),
+      this.prisma.parcel.count({
+        where: { status: ParcelStatus.DELIVERED },
+      }),
+      this.prisma.parcel.findMany({
+        take: 5,
+        orderBy: { updatedAt: 'desc' },
+        select: {
+          trackingId: true,
+          senderName: true,
+          receiverName: true,
+          status: true,
+          updatedAt: true,
+          price: true, // Added for debugging
+        },
+      }),
+    ]);
+
+    console.log('Dashboard metrics:', {
+      totalEarnings: totalEarnings._sum.price,
+      totalUsers,
+      parcelsInTransit,
+      parcelsDelivered,
+      recentParcels: recentParcels.map(p => ({ trackingId: p.trackingId, price: p.price, status: p.status })),
+    }); // Debug log
+
+    return {
+      totalEarnings: totalEarnings._sum.price ?? 0,
+      totalUsers,
+      parcelsInTransit,
+      parcelsDelivered,
+      recentParcels: recentParcels.map(parcel => ({
+        trackingId: parcel.trackingId,
+        senderName: parcel.senderName,
+        receiverName: parcel.receiverName,
+        status: parcel.status,
+        updatedAt: parcel.updatedAt.toISOString(),
+      })),
+    };
   }
 }

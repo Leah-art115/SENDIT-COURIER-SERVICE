@@ -6,6 +6,7 @@ import { NotificationService } from '../../../shared/notification/notification.s
 import { DriverService } from '../../../services/driver.service'; 
 import { interval, Subscription } from 'rxjs';
 import { DriverNavbarComponent } from '../driver-navbar/driver-navbar.component';
+import { RouteService } from '../../../services/route.service';
 
 interface Parcel {
   id: string;
@@ -66,7 +67,8 @@ export class DriverParcelsComponent implements AfterViewInit, OnDestroy {
 
   constructor(
     private notification: NotificationService,
-    private driverService: DriverService
+    private driverService: DriverService,
+      private routeService: RouteService
   ) {}
 
   ngAfterViewInit(): void {
@@ -244,50 +246,63 @@ export class DriverParcelsComponent implements AfterViewInit, OnDestroy {
     }, 300);
   }
 
-  renderGoogleMap(parcel: Parcel): void {
-    const map = new google.maps.Map(document.getElementById('google-map'), {
-      center: parcel.currentLocation,
-      zoom: 7
-    });
+  async renderGoogleMap(parcel: Parcel): Promise<void> {
+  const map = new google.maps.Map(document.getElementById('google-map'), {
+    center: parcel.currentLocation,
+    zoom: 7
+  });
 
-    const pickupCoords = {
-      lat: parcel.fromLat || 0,
-      lng: parcel.fromLng || 0
-    };
+  const pickupCoords = {
+    lat: parcel.fromLat || 0,
+    lng: parcel.fromLng || 0
+  };
 
-    const destinationCoords = {
-      lat: parcel.destinationLat || 0,
-      lng: parcel.destinationLng || 0
-    };
+  const destinationCoords = {
+    lat: parcel.destinationLat || 0,
+    lng: parcel.destinationLng || 0
+  };
 
-    const currentCoords = {
-      lat: parcel.currentLocation?.lat || 0,
-      lng: parcel.currentLocation?.lng || 0
-    };
+  const currentCoords = {
+    lat: parcel.currentLocation?.lat || 0,
+    lng: parcel.currentLocation?.lng || 0
+  };
 
-    new google.maps.Marker({
-      position: pickupCoords,
-      map,
-      title: 'Pickup Location',
-      icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
-    });
+  const bounds = new google.maps.LatLngBounds();
+  bounds.extend(pickupCoords);
+  bounds.extend(currentCoords);
+  bounds.extend(destinationCoords);
+  map.fitBounds(bounds);
 
-    new google.maps.Marker({
-      position: destinationCoords,
-      map,
-      title: 'Destination',
-      icon: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'
-    });
+  // Markers
+  new google.maps.Marker({
+    position: pickupCoords,
+    map,
+    title: 'Pickup Location',
+    icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+  });
 
-    new google.maps.Marker({
-      position: currentCoords,
-      map,
-      title: 'Current Location',
-      icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png'
-    });
+  new google.maps.Marker({
+    position: destinationCoords,
+    map,
+    title: 'Destination',
+    icon: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'
+  });
 
-    const routePath = new google.maps.Polyline({
-      path: [pickupCoords, currentCoords, destinationCoords],
+  new google.maps.Marker({
+    position: currentCoords,
+    map,
+    title: 'Current Location',
+    icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png'
+  });
+
+  // Use RouteService to calculate route with fallback
+  try {
+    const routeResult = await this.routeService.calculateRouteWithFallback(currentCoords, destinationCoords);
+
+    const decodedPath = this.routeService.decodePolyline(routeResult.polyline || '');
+
+    const polyline = new google.maps.Polyline({
+      path: decodedPath,
       geodesic: true,
       strokeColor: '#4285F4',
       strokeOpacity: 0.9,
@@ -305,12 +320,54 @@ export class DriverParcelsComponent implements AfterViewInit, OnDestroy {
       map
     });
 
-    const bounds = new google.maps.LatLngBounds();
-    bounds.extend(pickupCoords);
-    bounds.extend(currentCoords);
-    bounds.extend(destinationCoords);
-    map.fitBounds(bounds);
+    this.routeService.calculateRouteWithFallback(currentCoords, destinationCoords).then(route => {
+  const decodedPath = this.routeService.decodePolyline(route.polyline || '');
+
+  const routePolyline = new google.maps.Polyline({
+    path: decodedPath,
+    geodesic: true,
+    strokeColor: '#FF0000', // red route
+    strokeOpacity: 0.9,
+    strokeWeight: 4,
+    icons: [{
+      icon: {
+        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+        scale: 3,
+        strokeColor: '#FF0000'
+      },
+      offset: '50%'
+    }]
+  });
+
+  routePolyline.setMap(map);
+
+  // Adjust map bounds to fit route
+  const bounds = new google.maps.LatLngBounds();
+  decodedPath.forEach(point => bounds.extend(point));
+  map.fitBounds(bounds);
+}).catch(err => {
+  this.notification.error('Could not render route: ' + err.message);
+});
+
+
+    console.log('🛣️ Road-following route rendered with', decodedPath.length, 'points');
+  } catch (error: any) {
+    console.error('Failed to render route:', error);
+    this.notification.error(error.message || 'Unable to render road route. Showing straight line instead.');
+
+    // Fallback straight line
+    new google.maps.Polyline({
+      path: [currentCoords, destinationCoords],
+      geodesic: true,
+      strokeColor: '#FF0000',
+      strokeOpacity: 0.6,
+      strokeWeight: 4,
+      map
+    });
   }
+}
+
+
 
   openInfo(parcel: Parcel): void {
     this.selectedParcel = parcel;

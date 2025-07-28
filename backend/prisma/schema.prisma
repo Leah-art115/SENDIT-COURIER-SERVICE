@@ -14,14 +14,18 @@ model User {
   phone            String
   password         String
   role             Role      @default(USER)
-  resetToken       String?   // ✅ Add this for password reset
-  resetTokenExpiry DateTime? // ✅ Add this for password reset
+  resetToken       String?
+  resetTokenExpiry DateTime?
   createdAt        DateTime  @default(now())
+  sentParcels      Parcel[]  @relation("Sender")
+  receivedParcels  Parcel[]  @relation("Receiver")
 }
 
 model Parcel {
   id             String        @id @default(uuid())
   trackingId     String        @unique
+  senderId       Int?          // Changed to optional
+  receiverId     Int?          // Changed to optional
   senderName     String
   senderEmail    String
   receiverName   String
@@ -29,10 +33,10 @@ model Parcel {
   from           String
   to             String
   distance       Float
-  fromLat        Float?         // ✅ Add this
-  fromLng        Float?         // ✅ Add this
-  destinationLat Float?         // ✅ Already here
-  destinationLng Float?         // ✅ Already here
+  fromLat        Float?
+  fromLng        Float?
+  destinationLat Float?
+  destinationLng Float?
   type           ParcelType
   weight         Float
   mode           TransportMode
@@ -42,24 +46,21 @@ model Parcel {
   sentAt         DateTime      @default(now())
   pickedAt       DateTime?
   deliveredAt    DateTime?
-
-  driverId Int?
-  driver   Driver? @relation(fields: [driverId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  statusHistory ParcelStatusLog[]
+  driverId       Int?
+  driver         Driver?       @relation(fields: [driverId], references: [id])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  statusHistory  ParcelStatusLog[]
+  sender         User?         @relation("Sender", fields: [senderId], references: [id])
+  receiver       User?         @relation("Receiver", fields: [receiverId], references: [id])
 }
-
 
 model ParcelStatusLog {
   id        String       @id @default(uuid())
   parcelId  String
   status    ParcelStatus
   updatedAt DateTime     @default(now())
-
-  parcel Parcel @relation(fields: [parcelId], references: [id], onDelete: Cascade)
+  parcel    Parcel       @relation(fields: [parcelId], references: [id], onDelete: Cascade)
 }
 
 model Driver {
@@ -70,13 +71,12 @@ model Driver {
   mode                  CourierMode
   status                DriverStatus @default(AVAILABLE)
   canReceiveAssignments Boolean      @default(true)
-  currentLat            Float? // ✅ Latest driver latitude
-  currentLng            Float? // ✅ Latest driver longitude
+  currentLat            Float?
+  currentLng            Float?
   deletedAt             DateTime?
   createdAt             DateTime     @default(now())
   updatedAt             DateTime     @updatedAt
-
-  parcels Parcel[] // reverse relation
+  parcels               Parcel[]
 }
 
 enum Role {
@@ -99,11 +99,11 @@ enum TransportMode {
 
 enum ParcelStatus {
   PENDING
-  ASSIGNED // ✅ When admin assigns to driver
-  PICKED_UP_BY_DRIVER // ✅ Manually marked by driver
-  IN_TRANSIT // ✅ Based on driver's live location
-  DELIVERED // ✅ When driver reaches destination
-  COLLECTED_BY_RECEIVER // ✅ Manually marked by user
+  ASSIGNED
+  PICKED_UP_BY_DRIVER
+  IN_TRANSIT
+  DELIVERED
+  COLLECTED_BY_RECEIVER
   CANCELLED
 }
 

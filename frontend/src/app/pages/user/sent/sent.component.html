@@ -45,11 +45,125 @@
 </div>
 
 <!-- MAP MODAL -->
-<div class="modal" *ngIf="showMapModal">
-  <div class="modal-content">
-    <h3>Tracking Map - {{ selectedParcel?.trackingId }}</h3>
-    <div id="google-map"></div>
-    <button (click)="closeModals()">Close</button>
+<!-- REPLACE your existing MAP MODAL section with this enhanced version -->
+<div class="modal-overlay" [class.show]="showMapModal" (click)="closeModals()">
+  <div class="tracking-modal" (click)="$event.stopPropagation()" *ngIf="selectedParcel">
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <h2>Package Tracking</h2>
+      <button class="close-btn" (click)="closeModals()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Modal Content -->
+    <div class="modal-content">
+      <!-- Package Info Section -->
+      <div class="package-info">
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">Tracking ID:</span>
+            <span class="value">{{ selectedParcel.trackingId }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Status:</span>
+            <span class="value status" [style.color]="getStatusColor(selectedParcel.status)">
+              {{ formatStatus(selectedParcel.status) }}
+            </span>
+          </div>
+          <div class="info-item">
+            <span class="label">From:</span>
+            <span class="value">{{ selectedParcel.from }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">To:</span>
+            <span class="value">{{ selectedParcel.to }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Receiver:</span>
+            <span class="value">{{ selectedParcel.receiver }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Expected Delivery:</span>
+            <span class="value">{{ selectedParcel.expectedDelivery | date:'MMM dd, yyyy' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Map Section -->
+      <div class="map-section">
+        <h3>Route & Current Location</h3>
+        <div id="google-map" class="tracking-map"></div>
+        <div class="map-legend">
+          <div class="legend-item">
+            <span class="legend-color origin"></span>
+            <span>Origin</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color current"></span>
+            <span>Current Location</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color destination"></span>
+            <span>Destination</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline Section -->
+      <div class="timeline-section">
+        <h3>Delivery Timeline</h3>
+        <div class="timeline">
+          <div class="timeline-item" 
+               *ngFor="let item of createTimeline(selectedParcel)" 
+               [class.completed]="item.completed">
+            <div class="timeline-dot" [style.background-color]="item.completed ? '#22c55e' : '#e5e7eb'"></div>
+            <div class="timeline-content">
+              <div class="timeline-status">{{ item.status }}</div>
+              <div class="timeline-details">
+                <span class="timeline-date">{{ item.date }}</span>
+                <span class="timeline-location">{{ item.location }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Package Details -->
+      <div class="package-details">
+        <h3>Package Details</h3>
+        <div class="details-grid">
+          <div class="detail-item">
+            <span class="label">Description:</span>
+            <span class="value">{{ selectedParcel.description || 'No description available' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Weight:</span>
+            <span class="value">{{ selectedParcel.weight }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Type:</span>
+            <span class="value">{{ selectedParcel.type }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Delivery Mode:</span>
+            <span class="value">{{ selectedParcel.deliveryMode }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Payment Method:</span>
+            <span class="value">{{ selectedParcel.paymentMethod }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Date Sent:</span>
+            <span class="value">{{ selectedParcel.dateSent | date:'MMM dd, yyyy' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Price:</span>
+            <span class="value">{{ selectedParcel.price }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 

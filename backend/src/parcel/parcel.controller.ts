@@ -26,12 +26,27 @@ export class ParcelController {
     return this.parcelService.createParcel(dto);
   }
 
+  // Add this new route for public tracking (no auth required)
+  @Get('tracking/:trackingId')
+  async getByTrackingId(@Param('trackingId') trackingId: string) {
+    return this.parcelService.getParcelByTrackingId(trackingId);
+  }
+
+  // Move specific routes BEFORE parameterized routes
+  @Get('dashboard/metrics')
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async getDashboardMetrics() {
+    return this.parcelService.getDashboardMetrics();
+  }
+
   @Get()
   @Roles(Role.ADMIN)
   async getAll() {
     return this.parcelService.getAllParcels();
   }
 
+  // Parameterized routes should come AFTER specific routes
   @Get(':trackingId')
   async getOne(@Param('trackingId') trackingId: string) {
     return this.parcelService.getParcelByTrackingId(trackingId);
@@ -57,14 +72,6 @@ export class ParcelController {
   @Roles(Role.ADMIN)
   async unassignDriver(@Param('id') parcelId: string) {
     return this.parcelService.unassignDriver(parcelId);
-  }
-
-  // New endpoint for dashboard metrics
-  @Get('dashboard/metrics')
-  @UseGuards(JwtGuard, RolesGuard)
-  @Roles(Role.ADMIN)
-  async getDashboardMetrics() {
-    return this.parcelService.getDashboardMetrics();
   }
 
   @Post(':id/notify-delivery')

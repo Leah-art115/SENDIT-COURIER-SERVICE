@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { UserNavbarComponent } from '../user-navbar/user-navbar.component';
 import { UserService, UserProfile } from '../../../services/user.service';
 import { NotificationService } from '../../../shared/notification/notification.service';
+import { RouteService, RouteResult } from '../../../services/route.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { catchError, map, switchMap } from 'rxjs/operators';
@@ -26,9 +27,15 @@ interface Parcel {
   deliveryMode: string;
   expectedDelivery: string;
   price: string;
-  pickupLocation: { lat: number; lng: number }; // Added
+  pickupLocation: { lat: number; lng: number };
   currentLocation: { lat: number; lng: number };
   destinationLocation: { lat: number; lng: number };
+  timeline?: {
+    status: string;
+    date: string;
+    location: string;
+    completed: boolean;
+  }[];
 }
 
 @Component({
@@ -51,13 +58,15 @@ export class SentComponent implements OnInit, AfterViewInit {
   selectedParcel: Parcel | null = null;
   mapInitialized = false;
   parcels: Parcel[] = [];
+  isLoadingRoute = false;
 
   private baseUrl = environment.apiBaseUrl || 'http://localhost:3000/api';
 
   constructor(
     private userService: UserService,
     private http: HttpClient,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private routeService: RouteService
   ) {}
 
   private getAuthHeaders(): HttpHeaders {
@@ -109,8 +118,8 @@ export class SentComponent implements OnInit, AfterViewInit {
               ? new Date(parcel.deliveredAt).toISOString().split('T')[0]
               : new Date(new Date(parcel.sentAt).getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
             price: parcel.price != null ? `KSh ${parcel.price.toFixed(2)}` : 'N/A',
-            pickupLocation: { lat: parcel.fromLat || 0, lng: parcel.fromLng || 0 }, // Added
-            currentLocation: { lat: parcel.status === 'DELIVERED' ? parcel.destinationLat : (parcel.fromLat || 0), lng: parcel.status === 'DELIVERED' ? parcel.destinationLng : (parcel.fromLng || 0) }, // Updated
+            pickupLocation: { lat: parcel.fromLat || 0, lng: parcel.fromLng || 0 },
+            currentLocation: { lat: parcel.status === 'DELIVERED' ? parcel.destinationLat : (parcel.fromLat || 0), lng: parcel.status === 'DELIVERED' ? parcel.destinationLng : (parcel.fromLng || 0) },
             destinationLocation: { lat: parcel.destinationLat || 0, lng: parcel.destinationLng || 0 }
           }))),
           catchError((error: unknown) => {
@@ -160,13 +169,15 @@ export class SentComponent implements OnInit, AfterViewInit {
     this.showMapModal = true;
     setTimeout(() => {
       if (this.mapInitialized && this.selectedParcel) {
-        this.renderGoogleMap(this.selectedParcel);
+        this.renderGoogleMapWithRoute(this.selectedParcel);
       }
     }, 300);
   }
 
-  async renderGoogleMap(parcel: Parcel): Promise<void> {
+  async renderGoogleMapWithRoute(parcel: Parcel): Promise<void> {
     try {
+      this.isLoadingRoute = true;
+      
       const { AdvancedMarkerElement, PinElement } = await (window as any).google.maps.importLibrary("marker");
 
       const map = new google.maps.Map(document.getElementById('google-map'), {
@@ -217,26 +228,43 @@ export class SentComponent implements OnInit, AfterViewInit {
         content: destinationPin.element
       });
 
-      const path = parcel.status === 'DELIVERED' ? [parcel.pickupLocation, parcel.destinationLocation] : [parcel.pickupLocation, parcel.currentLocation, parcel.destinationLocation];
+      try {
+        if (parcel.status === 'DELIVERED') {
+          const routeResult = await this.routeService.calculateRouteWithFallback(
+            parcel.pickupLocation,
+            parcel.destinationLocation,
+            'DRIVING'
+          );
+          this.drawRouteOnMap(map, routeResult, '#22c55e', 'Completed Route');
+        } else {
+          if (this.isValidLocation(parcel.currentLocation) && 
+              (parcel.currentLocation.lat !== parcel.pickupLocation.lat || 
+               parcel.currentLocation.lng !== parcel.pickupLocation.lng)) {
+            
+            const completedRoute = await this.routeService.calculateRouteWithFallback(
+              parcel.pickupLocation,
+              parcel.currentLocation,
+              'DRIVING'
+            );
+            this.drawRouteOnMap(map, completedRoute, '#22c55e', 'Completed Route');
+          }
 
-      const routeLine = new google.maps.Polyline({
-        path,
-        geodesic: true,
-        strokeColor: '#4285F4',
-        strokeOpacity: 0.9,
-        strokeWeight: 4,
-        icons: [{
-          icon: {
-            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-            scale: 3,
-            strokeColor: '#4285F4',
-            fillColor: '#4285F4',
-            fillOpacity: 1
-          },
-          offset: '50%'
-        }],
-        map
-      });
+          const remainingRoute = await this.routeService.calculateRouteWithFallback(
+            parcel.currentLocation,
+            parcel.destinationLocation,
+            'DRIVING'
+          );
+          this.drawRouteOnMap(map, remainingRoute, '#ff6b6b', 'Remaining Route', true);
+        }
+
+        this.displayRouteInfo(parcel);
+
+      } catch (routeError) {
+        console.error('Route calculation failed, falling back to straight lines:', routeError);
+        this.notificationService.warning('Using approximate route - detailed routing unavailable');
+        
+        this.drawStraightLineRoute(map, parcel);
+      }
 
       const bounds = new google.maps.LatLngBounds();
       bounds.extend(parcel.pickupLocation);
@@ -250,7 +278,102 @@ export class SentComponent implements OnInit, AfterViewInit {
       console.error('Error rendering Google Map:', error);
       this.notificationService.error('Failed to render Google Map.');
       this.renderLegacyGoogleMap(parcel);
+    } finally {
+      this.isLoadingRoute = false;
     }
+  }
+
+  private drawRouteOnMap(
+    map: any, 
+    routeResult: RouteResult, 
+    color: string, 
+    title: string, 
+    isDashed: boolean = false
+  ): void {
+    let routePath: { lat: number; lng: number }[];
+
+    if (routeResult.polyline) {
+      console.log('🗺️ Using encoded polyline for accurate route');
+      routePath = this.routeService.decodePolyline(routeResult.polyline);
+    } else {
+      console.log('📍 Using route steps');
+      routePath = routeResult.steps.map(step => ({ lat: step.lat, lng: step.lng }));
+    }
+
+    console.log(`🛣️ Drawing route with ${routePath.length} points`);
+
+    const polylineOptions: any = {
+      path: routePath,
+      geodesic: true,
+      strokeColor: color,
+      strokeOpacity: isDashed ? 0.7 : 0.9,
+      strokeWeight: 4,
+      icons: [{
+        icon: {
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 3,
+          strokeColor: color,
+          fillColor: color,
+          fillOpacity: 1
+        },
+        offset: '50%'
+      }],
+      map,
+      title: title
+    };
+
+    if (isDashed) {
+      polylineOptions.strokeOpacity = 0.6;
+      polylineOptions.icons.push({
+        icon: {
+          path: 'M 0,-1 0,1',
+          strokeOpacity: 1,
+          scale: 2
+        },
+        offset: '0',
+        repeat: '20px'
+      });
+    }
+
+    new google.maps.Polyline(polylineOptions);
+  }
+
+  private drawStraightLineRoute(map: any, parcel: Parcel): void {
+    const path = parcel.status === 'DELIVERED' 
+      ? [parcel.pickupLocation, parcel.destinationLocation] 
+      : [parcel.pickupLocation, parcel.currentLocation, parcel.destinationLocation];
+
+    new google.maps.Polyline({
+      path,
+      geodesic: true,
+      strokeColor: '#4285F4',
+      strokeOpacity: 0.9,
+      strokeWeight: 4,
+      icons: [{
+        icon: {
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 3,
+          strokeColor: '#4285F4',
+          fillColor: '#4285F4',
+          fillOpacity: 1
+        },
+        offset: '50%'
+      }],
+      map
+    });
+  }
+
+  private displayRouteInfo(parcel: Parcel): void {
+    console.log('Route information for parcel:', parcel.trackingId);
+  }
+
+  private isValidLocation(location: { lat: number; lng: number }): boolean {
+    return location && 
+           typeof location.lat === 'number' && 
+           typeof location.lng === 'number' &&
+           isFinite(location.lat) && 
+           isFinite(location.lng) &&
+           (location.lat !== 0 || location.lng !== 0);
   }
 
   renderLegacyGoogleMap(parcel: Parcel): void {
@@ -289,26 +412,7 @@ export class SentComponent implements OnInit, AfterViewInit {
       }
     });
 
-    const path = parcel.status === 'DELIVERED' ? [parcel.pickupLocation, parcel.destinationLocation] : [parcel.pickupLocation, parcel.currentLocation, parcel.destinationLocation];
-
-    const routeLine = new google.maps.Polyline({
-      path,
-      geodesic: true,
-      strokeColor: '#4285F4',
-      strokeOpacity: 0.9,
-      strokeWeight: 4,
-      icons: [{
-        icon: {
-          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-          scale: 3,
-          strokeColor: '#4285F4',
-          fillColor: '#4285F4',
-          fillOpacity: 1
-        },
-        offset: '50%'
-      }],
-      map
-    });
+    this.drawStraightLineRoute(map, parcel);
 
     const bounds = new google.maps.LatLngBounds();
     bounds.extend(parcel.pickupLocation);
@@ -328,5 +432,64 @@ export class SentComponent implements OnInit, AfterViewInit {
     this.showMapModal = false;
     this.showInfoModal = false;
     this.selectedParcel = null;
+  }
+
+  getStatusColor(status: string): string {
+    switch (status.toLowerCase()) {
+      case 'delivered': return '#22c55e';
+      case 'in_transit': return '#f59e0b';
+      case 'picked_up_by_driver': return '#3b82f6';
+      case 'pending': return '#6c757d';
+      case 'assigned': return '#8b5cf6';
+      case 'cancelled': return '#ef4444';
+      case 'collected_by_receiver': return '#22c55e';
+      default: return '#64748b';
+    }
+  }
+
+  public formatStatus(status: string): string {
+    const statusMap: Record<string, string> = {
+      'PENDING': 'Package Received',
+      'ASSIGNED': 'Assigned to Driver',
+      'PICKED_UP_BY_DRIVER': 'Picked Up',
+      'IN_TRANSIT': 'In Transit',
+      'DELIVERED': 'Delivered',
+      'COLLECTED_BY_RECEIVER': 'Collected by Receiver',
+      'CANCELLED': 'Cancelled'
+    };
+    return statusMap[status] || status;
+  }
+
+  public createTimeline(parcel: Parcel): any[] {
+    const timeline: any[] = [];
+    
+    const statusOrder = ['PENDING', 'ASSIGNED', 'PICKED_UP_BY_DRIVER', 'IN_TRANSIT', 'DELIVERED', 'COLLECTED_BY_RECEIVER'];
+    const currentStatusIndex = statusOrder.indexOf(parcel.status);
+    
+    statusOrder.forEach((status, index) => {
+      if (index <= currentStatusIndex) {
+        timeline.push({
+          status: this.formatStatus(status),
+          date: new Date(parcel.dateSent).toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          }),
+          location: this.getStatusLocation(status, parcel),
+          completed: true
+        });
+      }
+    });
+    
+    return timeline;
+  }
+
+  private getStatusLocation(status: string, parcel: Parcel): string {
+    if (status === 'DELIVERED' || status === 'COLLECTED_BY_RECEIVER') {
+      return parcel.to;
+    }
+    return parcel.from;
   }
 }

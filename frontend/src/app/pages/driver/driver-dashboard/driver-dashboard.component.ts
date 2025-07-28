@@ -48,25 +48,26 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
   }
 
   loadParcels() {
-    this.subscriptions.add(
-      this.driverService.getMyParcels().subscribe({
-        next: (parcels) => {
-          this.totalDeliveries = parcels.length;
-          this.inTransit = parcels.filter(p => p.status === 'IN_TRANSIT' || p.status === 'PICKED_UP_BY_DRIVER').length;
-          this.completed = parcels.filter(p => p.status === 'DELIVERED').length;
-          this.recentDeliveries = parcels.slice(0, 5).map(parcel => ({
-            trackingId: parcel.trackingId,
-            recipient: parcel.receiverName,
-            status: parcel.status,
-            date: new Date(parcel.updatedAt).toLocaleDateString()
-          }));
-        },
-        error: (error) => {
-          this.notificationService.error(error.message);
-        }
-      })
-    );
-  }
+  this.subscriptions.add(
+    this.driverService.getMyParcels().subscribe({
+      next: (parcels) => {
+        this.totalDeliveries = parcels.filter(p => p.status === 'DELIVERED').length;
+        this.inTransit = parcels.filter(p => p.status === 'IN_TRANSIT' || p.status === 'PICKED_UP_BY_DRIVER').length;
+        this.completed = this.totalDeliveries; // Optional: completed can match totalDeliveries
+        this.recentDeliveries = parcels.slice(0, 5).map(parcel => ({
+          trackingId: parcel.trackingId,
+          recipient: parcel.receiverName,
+          status: parcel.status,
+          date: new Date(parcel.updatedAt).toLocaleDateString()
+        }));
+      },
+      error: (error) => {
+        this.notificationService.error(error.message);
+      }
+    })
+  );
+}
+
 
   updateLocation() {
     if (!this.selectedParcelId || !this.location) {

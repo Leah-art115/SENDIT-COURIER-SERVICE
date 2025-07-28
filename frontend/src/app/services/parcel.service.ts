@@ -60,9 +60,8 @@ export class ParcelService {
   }
 
   getParcelByTrackingId(trackingId: string): Observable<Parcel> {
-    return this.http.get<Parcel>(`${this.baseUrl}/parcels/tracking/${trackingId}`, {
-      headers: this.getAuthHeaders(),
-    }).pipe(
+    // Remove auth headers for public tracking
+    return this.http.get<Parcel>(`${this.baseUrl}/parcels/tracking/${trackingId}`).pipe(
       map(parcel => ({
         ...parcel,
         pickedAt: parcel.pickedAt ? new Date(parcel.pickedAt).toISOString() : undefined,

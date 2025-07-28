@@ -4,12 +4,15 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { NotificationService } from '../../shared/notification/notification.service';
 import { ParcelService } from '../../services/parcel.service'; // Use your existing ParcelService
+import { RouteService, RouteResult } from '../../services/route.service'; // Import the route service
 import { catchError, map } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 // Declare google as a global variable for TypeScript
 declare const google: any;
+
+
 
 interface TrackingResult {
   trackingId: string;
@@ -48,11 +51,13 @@ export class HomepageComponent implements OnInit, AfterViewInit {
   trackingResult: TrackingResult | null = null;
   mapInitialized = false;
   isLoading = false;
+  isLoadingRoute = false; // Add loading state for route calculation
 
   constructor(
     private notify: NotificationService,
     private router: Router,
-    private parcelService: ParcelService // Use your existing ParcelService
+    private parcelService: ParcelService, // Use your existing ParcelService
+    private routeService: RouteService // Inject route service
   ) {}
 
   ngOnInit(): void {
@@ -156,12 +161,12 @@ export class HomepageComponent implements OnInit, AfterViewInit {
           // Initialize map after modal is shown
           setTimeout(() => {
             if (this.mapInitialized && this.trackingResult) {
-              this.renderGoogleMap(this.trackingResult);
+              this.renderGoogleMapWithRoute(this.trackingResult);
             } else {
               console.warn('Map not initialized yet, retrying...');
               setTimeout(() => {
                 if (this.mapInitialized && this.trackingResult) {
-                  this.renderGoogleMap(this.trackingResult);
+                  this.renderGoogleMapWithRoute(this.trackingResult);
                 }
               }, 1000);
             }
@@ -240,6 +245,13 @@ export class HomepageComponent implements OnInit, AfterViewInit {
     return expected.toISOString().split('T')[0];
   }
 
+  activeFaqIndex: number | null = null;
+
+toggleFaq(index: number): void {
+  this.activeFaqIndex = this.activeFaqIndex === index ? null : index;
+}
+
+
   private createTimeline(parcel: any): any[] {
     const timeline: any[] = [];
     
@@ -297,8 +309,11 @@ export class HomepageComponent implements OnInit, AfterViewInit {
     return map[city] || { lat: -1.2921, lng: 36.8219 }; // Default to Nairobi
   }
 
-  async renderGoogleMap(trackingData: TrackingResult): Promise<void> {
+  // 🚀 NEW: Enhanced map rendering with actual road routes
+  async renderGoogleMapWithRoute(trackingData: TrackingResult): Promise<void> {
     try {
+      this.isLoadingRoute = true;
+      
       // Check if the map container exists
       const mapContainer = document.getElementById('tracking-map');
       if (!mapContainer) {
@@ -362,29 +377,52 @@ export class HomepageComponent implements OnInit, AfterViewInit {
         content: destinationPin.element
       });
 
-      // Create route path
-      const path = trackingData.status === 'Delivered' ? 
-        [trackingData.pickupLocation, trackingData.destinationLocation] : 
-        [trackingData.pickupLocation, trackingData.currentLocation, trackingData.destinationLocation];
+      // 🚀 NEW: Calculate and display actual road routes
+      try {
+        if (trackingData.status === 'Delivered') {
+          // Show completed route from pickup to destination
+          console.log('📍 Using route steps for delivered parcel');
+          const routeResult = await this.routeService.calculateRouteWithFallback(
+            trackingData.pickupLocation,
+            trackingData.destinationLocation,
+            'DRIVING'
+          );
+          this.drawRouteOnMap(map, routeResult, '#22c55e', 'Completed Route');
+        } else {
+          // Show route from pickup to current location (completed part)
+          if (this.isValidLocation(trackingData.currentLocation) && 
+              (trackingData.currentLocation.lat !== trackingData.pickupLocation.lat || 
+               trackingData.currentLocation.lng !== trackingData.pickupLocation.lng)) {
+            
+            console.log('🛣️ Drawing completed route to current location');
+            const completedRoute = await this.routeService.calculateRouteWithFallback(
+              trackingData.pickupLocation,
+              trackingData.currentLocation,
+              'DRIVING'
+            );
+            this.drawRouteOnMap(map, completedRoute, '#22c55e', 'Completed Route');
+          }
 
-      new google.maps.Polyline({
-        path,
-        geodesic: true,
-        strokeColor: '#4285F4',
-        strokeOpacity: 0.9,
-        strokeWeight: 4,
-        icons: [{
-          icon: {
-            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-            scale: 3,
-            strokeColor: '#4285F4',
-            fillColor: '#4285F4',
-            fillOpacity: 1
-          },
-          offset: '50%'
-        }],
-        map
-      });
+          // Show remaining route from current location to destination (dashed line)
+          console.log('🛣️ Drawing remaining route to destination');
+          const remainingRoute = await this.routeService.calculateRouteWithFallback(
+            trackingData.currentLocation,
+            trackingData.destinationLocation,
+            'DRIVING'
+          );
+          this.drawRouteOnMap(map, remainingRoute, '#ff6b6b', 'Remaining Route', true);
+        }
+
+        // Display route information
+        this.displayRouteInfo(trackingData);
+
+      } catch (routeError) {
+        console.error('Route calculation failed, falling back to straight lines:', routeError);
+        this.notify.warning('Using approximate route - detailed routing unavailable');
+        
+        // Fallback to straight lines
+        this.drawStraightLineRoute(map, trackingData);
+      }
 
       // Fit map to show all markers
       const bounds = new google.maps.LatLngBounds();
@@ -398,7 +436,110 @@ export class HomepageComponent implements OnInit, AfterViewInit {
     } catch (error) {
       console.error('Error with Advanced Markers, falling back to legacy markers:', error);
       this.renderLegacyGoogleMap(trackingData);
+    } finally {
+      this.isLoadingRoute = false;
     }
+  }
+
+  // 🚀 NEW: Draw route on map using route data
+  private drawRouteOnMap(
+    map: any, 
+    routeResult: RouteResult, 
+    color: string, 
+    title: string, 
+    isDashed: boolean = false
+  ): void {
+    let routePath: { lat: number; lng: number }[];
+
+    // Use encoded polyline if available (more accurate), otherwise use steps
+    if (routeResult.polyline) {
+      console.log('🗺️ Using encoded polyline for accurate route');
+      routePath = this.routeService.decodePolyline(routeResult.polyline);
+    } else {
+      console.log('📍 Using route steps');
+      routePath = routeResult.steps.map(step => ({ lat: step.lat, lng: step.lng }));
+    }
+
+    console.log(`🛣️ Drawing route with ${routePath.length} points`);
+
+    const polylineOptions: any = {
+      path: routePath,
+      geodesic: true,
+      strokeColor: color,
+      strokeOpacity: isDashed ? 0.7 : 0.9,
+      strokeWeight: 4,
+      icons: [{
+        icon: {
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 3,
+          strokeColor: color,
+          fillColor: color,
+          fillOpacity: 1
+        },
+        offset: '50%'
+      }],
+      map,
+      title: title
+    };
+
+    // Add dashed line effect for remaining route
+    if (isDashed) {
+      polylineOptions.strokeOpacity = 0.6;
+      polylineOptions.icons.push({
+        icon: {
+          path: 'M 0,-1 0,1',
+          strokeOpacity: 1,
+          scale: 2
+        },
+        offset: '0',
+        repeat: '20px'
+      });
+    }
+
+    new google.maps.Polyline(polylineOptions);
+  }
+
+  // 🚀 NEW: Fallback to straight line route
+  private drawStraightLineRoute(map: any, trackingData: TrackingResult): void {
+    const path = trackingData.status === 'Delivered' 
+      ? [trackingData.pickupLocation, trackingData.destinationLocation] 
+      : [trackingData.pickupLocation, trackingData.currentLocation, trackingData.destinationLocation];
+
+    new google.maps.Polyline({
+      path,
+      geodesic: true,
+      strokeColor: '#4285F4',
+      strokeOpacity: 0.9,
+      strokeWeight: 4,
+      icons: [{
+        icon: {
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 3,
+          strokeColor: '#4285F4',
+          fillColor: '#4285F4',
+          fillOpacity: 1
+        },
+        offset: '50%'
+      }],
+      map
+    });
+  }
+
+  // 🚀 NEW: Display route information
+  private displayRouteInfo(trackingData: TrackingResult): void {
+    // You can add route information to the UI here
+    // For example, add distance and duration to the modal
+    console.log('Route information for tracking:', trackingData.trackingId);
+  }
+
+  // 🚀 NEW: Validate location coordinates
+  private isValidLocation(location: { lat: number; lng: number }): boolean {
+    return location && 
+           typeof location.lat === 'number' && 
+           typeof location.lng === 'number' &&
+           isFinite(location.lat) && 
+           isFinite(location.lng) &&
+           (location.lat !== 0 || location.lng !== 0);
   }
 
   renderLegacyGoogleMap(trackingData: TrackingResult): void {
@@ -448,29 +589,8 @@ export class HomepageComponent implements OnInit, AfterViewInit {
       }
     });
 
-    // Route path
-    const path = trackingData.status === 'Delivered' ? 
-      [trackingData.pickupLocation, trackingData.destinationLocation] : 
-      [trackingData.pickupLocation, trackingData.currentLocation, trackingData.destinationLocation];
-
-    new google.maps.Polyline({
-      path,
-      geodesic: true,
-      strokeColor: '#4285F4',
-      strokeOpacity: 0.9,
-      strokeWeight: 4,
-      icons: [{
-        icon: {
-          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-          scale: 3,
-          strokeColor: '#4285F4',
-          fillColor: '#4285F4',
-          fillOpacity: 1
-        },
-        offset: '50%'
-      }],
-      map
-    });
+    // Use straight line as fallback
+    this.drawStraightLineRoute(map, trackingData);
 
     // Fit bounds
     const bounds = new google.maps.LatLngBounds();
@@ -529,4 +649,67 @@ export class HomepageComponent implements OnInit, AfterViewInit {
       }
     });
   }
+
+  currentYear = new Date().getFullYear();
+
+  currentPage = 1;
+itemsPerPage = 6;
+
+parcelPrices = [
+  // 💌 ENVELOPES
+  { type: 'Envelope', weight: '0.3 kg', mode: 'Skates', distance: '2 km', standard: 310, express: 465 },
+  { type: 'Envelope', weight: 'Up to 0.5 kg', mode: 'Skates', distance: '3 km', standard: 330, express: 495 },
+  { type: 'Envelope', weight: 'Up to 1 kg', mode: 'Bicycle', distance: '4 km', standard: 370, express: 555 },
+  { type: 'Envelope', weight: '1.5 kg', mode: 'Motorbike', distance: '5 km', standard: 420, express: 630 },
+  { type: 'Envelope', weight: '2–3 kg', mode: 'Motorbike', distance: '6 km', standard: 480, express: 720 },
+  { type: 'Envelope', weight: '3–5 kg', mode: 'Motorbike', distance: '7 km', standard: 540, express: 810 },
+
+  // 📦 BOXED PACKAGES
+  { type: 'Boxed Package', weight: '3–10 kg', mode: 'Motorbike', distance: '5 km', standard: 550, express: 825 },
+  { type: 'Boxed Package', weight: '5–12 kg', mode: 'Motorbike', distance: '6 km', standard: 610, express: 915 },
+  { type: 'Boxed Package', weight: '10 kg', mode: 'Motorbike', distance: '7 km', standard: 670, express: 1005 },
+  { type: 'Boxed Package', weight: '12–20 kg', mode: 'Car', distance: '9 km', standard: 850, express: 1275 },
+  { type: 'Boxed Package', weight: '20–25 kg', mode: 'Car / Van', distance: '14 km', standard: 990, express: 1485 },
+  { type: 'Boxed Package', weight: '25–30 kg', mode: 'Van', distance: '16 km', standard: 1120, express: 1680 },
+
+  // 🎒 BAGS
+  { type: 'Bag', weight: '8–15 kg', mode: 'Motorbike / Car', distance: '8 km', standard: 760, express: 1140 },
+  { type: 'Bag', weight: '10–18 kg', mode: 'Car', distance: '10 km', standard: 890, express: 1335 },
+  { type: 'Bag', weight: '18–22 kg', mode: 'Car', distance: '11 km', standard: 1050, express: 1575 },
+  { type: 'Bag', weight: '22–28 kg', mode: 'Car / SUV', distance: '13 km', standard: 1190, express: 1785 },
+  { type: 'Bag', weight: '28–35 kg', mode: 'SUV', distance: '15 km', standard: 1320, express: 1980 },
+  { type: 'Bag', weight: '35–40 kg', mode: 'SUV', distance: '17 km', standard: 1450, express: 2175 },
+
+  // 🧳 SUITCASES
+  { type: 'Suitcase', weight: '15–25 kg', mode: 'Car / SUV', distance: '12 km', standard: 1190, express: 1785 },
+  { type: 'Suitcase', weight: '20–30 kg', mode: 'SUV', distance: '15 km', standard: 1350, express: 2025 },
+  { type: 'Suitcase', weight: '25–40 kg', mode: 'SUV', distance: '18 km', standard: 1480, express: 2220 },
+  { type: 'Suitcase', weight: '35–50 kg', mode: 'SUV / Van', distance: '20 km', standard: 1600, express: 2400 },
+  { type: 'Suitcase', weight: '50–65 kg', mode: 'Van', distance: '25 km', standard: 1750, express: 2625 },
+  { type: 'Suitcase', weight: '65–80 kg', mode: 'Van / Truck', distance: '30 km', standard: 1950, express: 2925 }
+];
+
+
+get totalPages() {
+  return Math.ceil(this.parcelPrices.length / this.itemsPerPage);
+}
+
+get paginatedItems() {
+  const start = (this.currentPage - 1) * this.itemsPerPage;
+  return this.parcelPrices.slice(start, start + this.itemsPerPage);
+}
+
+nextPage() {
+  if (this.currentPage < this.totalPages) {
+    this.currentPage++;
+  }
+}
+
+prevPage() {
+  if (this.currentPage > 1) {
+    this.currentPage--;
+  }
+}
+
+
 }

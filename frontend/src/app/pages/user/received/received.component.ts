@@ -4,11 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { UserNavbarComponent } from '../user-navbar/user-navbar.component';
 import { UserService, UserProfile } from '../../../services/user.service';
 import { NotificationService } from '../../../shared/notification/notification.service';
-import { RouteService, RouteResult } from '../../../services/route.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { throwError } from 'rxjs';
+import { RouteService, RouteResult, RouteStep } from '../../../services/route.service';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 declare const google: any;
 
@@ -41,7 +43,13 @@ interface Parcel {
 @Component({
   selector: 'app-received',
   standalone: true,
-  imports: [CommonModule, FormsModule, UserNavbarComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    UserNavbarComponent,
+    MatDialogModule,
+    MatSnackBarModule
+  ],
   templateUrl: './received.component.html',
   styleUrls: ['./received.component.css']
 })
@@ -114,7 +122,7 @@ export class ReceivedComponent implements OnInit, AfterViewInit {
               description: parcel.description || 'No description',
               type: parcel.type,
               weight: `${parcel.weight} kg`,
-              paymentMethod: 'Unknown',
+              paymentMethod: 'M-Pesa',
               deliveryMode: parcel.mode,
               expectedDelivery: parcel.deliveredAt
                 ? new Date(parcel.deliveredAt).toISOString().split('T')[0]
@@ -123,7 +131,7 @@ export class ReceivedComponent implements OnInit, AfterViewInit {
               pickupLocation: { lat: parcel.fromLat || 0, lng: parcel.fromLng || 0 },
               currentLocation: { lat: parcel.status === 'DELIVERED' ? parcel.destinationLat || 0 : (parcel.currentLat || parcel.fromLat || 0), lng: parcel.status === 'DELIVERED' ? parcel.destinationLng || 0 : (parcel.currentLng || parcel.fromLng || 0) },
               destinationLocation: { lat: parcel.destinationLat || 0, lng: parcel.destinationLng || 0 },
-              timeline: [] // Initialize empty timeline
+              timeline: []
             }))
           ),
           catchError(err => {
@@ -171,7 +179,7 @@ export class ReceivedComponent implements OnInit, AfterViewInit {
         console.warn('Map not initialized or no parcel selected');
         this.notificationService.error('Map not ready. Please try again.');
       }
-    }, 500); // Increased timeout to ensure map script is loaded
+    }, 500);
   }
 
   async renderGoogleMapWithRoute(parcel: Parcel): Promise<void> {
@@ -308,7 +316,7 @@ export class ReceivedComponent implements OnInit, AfterViewInit {
       console.log('Decoded polyline points:', routePath.length);
     } else {
       console.warn('📍 No polyline, using route steps');
-      routePath = routeResult.steps.map(step => ({ lat: step.lat, lng: step.lng }));
+      routePath = routeResult.steps.map((step: RouteStep) => ({ lat: step.lat, lng: step.lng }));
     }
 
     if (routePath.length < 2) {
@@ -364,7 +372,7 @@ export class ReceivedComponent implements OnInit, AfterViewInit {
     new google.maps.Polyline({
       path,
       geodesic: true,
-      strokeColor: '#ff0000', // Changed to red for clarity
+      strokeColor: '#ff0000',
       strokeOpacity: 0.9,
       strokeWeight: 4,
       icons: [{
@@ -492,26 +500,9 @@ export class ReceivedComponent implements OnInit, AfterViewInit {
     return parcel.from;
   }
 
-  markAsPickedUp(parcel: Parcel): void {
-    if (parcel.status !== 'DELIVERED') {
-      this.notificationService.error('Parcel must be delivered before marking as picked up.');
-      return;
-    }
-
-    this.http.patch(`${this.baseUrl}/user/mark-collected/${parcel.id}`, {}, { headers: this.getAuthHeaders() })
-      .pipe(catchError(err => {
-        this.notificationService.error('Failed to mark as picked up.');
-        return throwError(() => new Error('Failed to mark picked up'));
-      }))
-      .subscribe(() => {
-        this.parcels = this.parcels.map(p => p.id === parcel.id ? { ...p, status: 'COLLECTED_BY_RECEIVER' } : p);
-        this.notificationService.success('Marked as picked up.');
-      });
-  }
-
   markAsComplete(parcel: Parcel): void {
-    if (parcel.status !== 'PICKED_UP_BY_DRIVER') {
-      this.notificationService.error('Parcel must be picked up first.');
+    if (parcel.status !== 'DELIVERED') {
+      this.notificationService.error('Parcel must be delivered first.');
       return;
     }
     this.http.patch(`${this.baseUrl}/user/mark-collected/${parcel.id}`, {}, { headers: this.getAuthHeaders() })

@@ -83,3 +83,6 @@
   --shadow-strong: rgba(128, 0, 32, 0.3);
   --border-burgundy: rgba(128, 0, 32, 0.3);
 }
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

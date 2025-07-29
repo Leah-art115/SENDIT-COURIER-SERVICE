@@ -311,7 +311,13 @@ export class AdminParcelsComponent implements AfterViewInit {
   }
 
   canUnassign(status: string): boolean {
-    const restrictedStatuses = ['PICKED_UP_BY_DRIVER', 'IN_TRANSIT', 'DELIVERED', 'PICKED_BY_CUSTOMER', 'COMPLETE'];
+    const restrictedStatuses = [
+      'PICKED_UP_BY_DRIVER', 
+      'IN_TRANSIT', 
+      'DELIVERED', 
+      'COLLECTED_BY_RECEIVER', 
+      'CANCELLED'
+    ];
     return !restrictedStatuses.includes(status.toUpperCase());
   }
 

@@ -38,21 +38,18 @@
     <p><strong>From:</strong> {{ p.from }} → <strong>To:</strong> {{ p.to }}</p>
     <p><strong>Date Sent:</strong> {{ p.dateSent }}</p>
     <p><strong>Status:</strong> {{ p.status }}</p>
-    <p><strong>Price:</strong> {{ p.price }}</p> <!-- Added -->
+    <p><strong>Price:</strong> {{ p.price }}</p>
     <button (click)="openMap(p)">Track</button>
     <button (click)="openInfo(p)">View More Info</button>
-    <button *ngIf="p.status === 'DELIVERED'" (click)="markAsPickedUp(p)">
-  Mark as Picked Up
-</button>
-
-    <!-- <button (click)="markAsComplete(p)" [disabled]="p.status !== 'PICKED_UP_BY_DRIVER'">Mark as Complete</button> -->
+    <button *ngIf="p.status === 'DELIVERED'" (click)="markAsComplete(p)">
+      Mark as Received
+    </button>
   </div>
 </div>
 
-<!-- REPLACE the existing MAP MODAL section in received.component.html (lines 56–62) with this -->
+<!-- MAP MODAL -->
 <div class="modal-overlay" [class.show]="showMapModal" (click)="closeModals()">
   <div class="tracking-modal" (click)="$event.stopPropagation()" *ngIf="selectedParcel">
-    <!-- Modal Header -->
     <div class="modal-header">
       <h2>Package Tracking</h2>
       <button class="close-btn" (click)="closeModals()">
@@ -60,9 +57,7 @@
       </button>
     </div>
 
-    <!-- Modal Content -->
     <div class="modal-content">
-      <!-- Package Info Section -->
       <div class="package-info">
         <div class="info-grid">
           <div class="info-item">
@@ -94,7 +89,6 @@
         </div>
       </div>
 
-      <!-- Map Section -->
       <div class="map-section">
         <h3>Route & Current Location</h3>
         <div id="google-map" class="tracking-map"></div>
@@ -114,7 +108,6 @@
         </div>
       </div>
 
-      <!-- Timeline Section -->
       <div class="timeline-section">
         <h3>Delivery Timeline</h3>
         <div class="timeline">
@@ -133,7 +126,6 @@
         </div>
       </div>
 
-      <!-- Package Details -->
       <div class="package-details">
         <h3>Package Details</h3>
         <div class="details-grid">
@@ -168,9 +160,8 @@
         </div>
       </div>
 
-      <!-- Mark as Picked Up Button -->
-      <button *ngIf="selectedParcel.status === 'DELIVERED'" (click)="markAsPickedUp(selectedParcel)">
-        Mark as Picked Up
+      <button *ngIf="selectedParcel.status === 'DELIVERED'" (click)="markAsComplete(selectedParcel)">
+        Mark as Received
       </button>
     </div>
   </div>
@@ -189,12 +180,10 @@
     <p><strong>Payment Method:</strong> {{ selectedParcel?.paymentMethod }}</p>
     <p><strong>Delivery Mode:</strong> {{ selectedParcel?.deliveryMode }}</p>
     <p><strong>Expected Delivery:</strong> {{ selectedParcel?.expectedDelivery }}</p>
-    <p><strong>Price:</strong> {{ selectedParcel?.price }}</p> <!-- Added -->
-   <button *ngIf="selectedParcel?.status === 'DELIVERED'" (click)="markAsPickedUp(selectedParcel!)">
-  Mark as Picked Up
-</button>
-
-    <!-- <button (click)="markAsComplete(selectedParcel!)" [disabled]="selectedParcel?.status !== 'PICKED_UP_BY_DRIVER'">Mark as Complete</button> -->
+    <p><strong>Price:</strong> {{ selectedParcel?.price }}</p>
+    <button *ngIf="selectedParcel?.status === 'DELIVERED'" (click)="markAsComplete(selectedParcel!)">
+      Mark as Received
+    </button>
     <button (click)="closeModals()">Close</button>
   </div>
 </div>

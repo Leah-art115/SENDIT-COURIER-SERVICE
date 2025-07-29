@@ -144,7 +144,20 @@ export class DriverService {
 
         console.log(`Parcel ${parcelId} status updated to: ${newStatus}`);
 
+        // 🔥 FIX: Update driver status to AVAILABLE when parcel is delivered
         if (newStatus === ParcelStatus.DELIVERED) {
+          await this.prisma.driver.update({
+            where: { id: driverId },
+            data: {
+              status: DriverStatus.AVAILABLE,
+              canReceiveAssignments: true,
+              updatedAt: new Date(),
+            },
+          });
+          console.log(
+            `Driver ${driverId} status updated to AVAILABLE after delivery`,
+          );
+
           try {
             await this.mailerService.sendReceiverPickupNotification(
               parcel.receiverEmail,
@@ -270,14 +283,25 @@ export class DriverService {
         );
       }
 
-      const parcel = await this.prisma.parcel.update({
-        where: { id: parcelId },
-        data: {
-          status: ParcelStatus.PICKED_UP_BY_DRIVER,
-          pickedAt: new Date(),
-          updatedAt: new Date(),
-        },
-      });
+      // 🔥 FIX: Update both parcel and driver status in a transaction
+      const [parcel] = await this.prisma.$transaction([
+        this.prisma.parcel.update({
+          where: { id: parcelId },
+          data: {
+            status: ParcelStatus.PICKED_UP_BY_DRIVER,
+            pickedAt: new Date(),
+            updatedAt: new Date(),
+          },
+        }),
+        this.prisma.driver.update({
+          where: { id: driverId },
+          data: {
+            status: DriverStatus.ON_DELIVERY,
+            canReceiveAssignments: false,
+            updatedAt: new Date(),
+          },
+        }),
+      ]);
 
       await this.prisma.parcelStatusLog.create({
         data: {
@@ -289,6 +313,7 @@ export class DriverService {
       console.log(
         `✅ Parcel ${parcelId} marked as picked up by driver ${driverId}`,
       );
+      console.log(`✅ Driver ${driverId} status updated to ON_DELIVERY`);
 
       try {
         const adminEmail =

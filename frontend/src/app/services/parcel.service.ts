@@ -3,10 +3,10 @@ import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import { Parcel } from './driver.service'; // Import Parcel interface from driver.service.ts
+import { Parcel } from './driver.service';
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
 export class ParcelService {
   private baseUrl = environment.apiBaseUrl || 'http://localhost:3000/api';
@@ -17,58 +17,57 @@ export class ParcelService {
     const token = localStorage.getItem('auth_token');
     return new HttpHeaders({
       Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
     });
   }
 
   createParcel(dto: any): Observable<Parcel> {
     return this.http.post<Parcel>(`${this.baseUrl}/parcels`, dto, {
-      headers: this.getAuthHeaders(),
+      headers: this.getAuthHeaders()
     }).pipe(
-      catchError(this.handleError),
+      catchError(this.handleError)
     );
   }
 
   getAllParcels(): Observable<Parcel[]> {
     return this.http.get<Parcel[]>(`${this.baseUrl}/parcels`, {
-      headers: this.getAuthHeaders(),
+      headers: this.getAuthHeaders()
     }).pipe(
       map(parcels =>
         parcels.map(parcel => ({
           ...parcel,
           pickedAt: parcel.pickedAt ? new Date(parcel.pickedAt).toISOString() : undefined,
           deliveredAt: parcel.deliveredAt ? new Date(parcel.deliveredAt).toISOString() : undefined,
-          updatedAt: new Date(parcel.updatedAt).toISOString(),
-        })),
+          updatedAt: new Date(parcel.updatedAt).toISOString()
+        }))
       ),
-      catchError(this.handleError),
+      catchError(this.handleError)
     );
   }
 
   getParcelById(parcelId: string): Observable<Parcel> {
     return this.http.get<Parcel>(`${this.baseUrl}/parcels/${parcelId}`, {
-      headers: this.getAuthHeaders(),
+      headers: this.getAuthHeaders()
     }).pipe(
       map(parcel => ({
         ...parcel,
         pickedAt: parcel.pickedAt ? new Date(parcel.pickedAt).toISOString() : undefined,
         deliveredAt: parcel.deliveredAt ? new Date(parcel.deliveredAt).toISOString() : undefined,
-        updatedAt: new Date(parcel.updatedAt).toISOString(),
+        updatedAt: new Date(parcel.updatedAt).toISOString()
       })),
-      catchError(this.handleError),
+      catchError(this.handleError)
     );
   }
 
   getParcelByTrackingId(trackingId: string): Observable<Parcel> {
-    // Remove auth headers for public tracking
     return this.http.get<Parcel>(`${this.baseUrl}/parcels/tracking/${trackingId}`).pipe(
       map(parcel => ({
         ...parcel,
         pickedAt: parcel.pickedAt ? new Date(parcel.pickedAt).toISOString() : undefined,
         deliveredAt: parcel.deliveredAt ? new Date(parcel.deliveredAt).toISOString() : undefined,
-        updatedAt: new Date(parcel.updatedAt).toISOString(),
+        updatedAt: new Date(parcel.updatedAt).toISOString()
       })),
-      catchError(this.handleError),
+      catchError(this.handleError)
     );
   }
 
@@ -76,15 +75,15 @@ export class ParcelService {
     return this.http.patch<Parcel>(
       `${this.baseUrl}/parcels/${parcelId}/assign-driver`,
       { driverId },
-      { headers: this.getAuthHeaders() },
+      { headers: this.getAuthHeaders() }
     ).pipe(
       map(parcel => ({
         ...parcel,
         pickedAt: parcel.pickedAt ? new Date(parcel.pickedAt).toISOString() : undefined,
         deliveredAt: parcel.deliveredAt ? new Date(parcel.deliveredAt).toISOString() : undefined,
-        updatedAt: new Date(parcel.updatedAt).toISOString(),
+        updatedAt: new Date(parcel.updatedAt).toISOString()
       })),
-      catchError(this.handleError),
+      catchError(this.handleError)
     );
   }
 
@@ -92,15 +91,15 @@ export class ParcelService {
     return this.http.patch<Parcel>(
       `${this.baseUrl}/parcels/${parcelId}/unassign-driver`,
       {},
-      { headers: this.getAuthHeaders() },
+      { headers: this.getAuthHeaders() }
     ).pipe(
       map(parcel => ({
         ...parcel,
         pickedAt: parcel.pickedAt ? new Date(parcel.pickedAt).toISOString() : undefined,
         deliveredAt: parcel.deliveredAt ? new Date(parcel.deliveredAt).toISOString() : undefined,
-        updatedAt: new Date(parcel.updatedAt).toISOString(),
+        updatedAt: new Date(parcel.updatedAt).toISOString()
       })),
-      catchError(this.handleError),
+      catchError(this.handleError)
     );
   }
 
@@ -117,7 +116,7 @@ export class ParcelService {
 
   sendManualDeliveryNotification(parcelId: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/parcels/${parcelId}/notify-delivery`, {}, {
-      headers: this.getAuthHeaders(),
+      headers: this.getAuthHeaders()
     }).pipe(catchError(this.handleError));
   }
 

@@ -4,11 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { UserNavbarComponent } from '../user-navbar/user-navbar.component';
 import { UserService, UserProfile } from '../../../services/user.service';
 import { NotificationService } from '../../../shared/notification/notification.service';
-import { RouteService, RouteResult } from '../../../services/route.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { throwError } from 'rxjs';
+import { RouteService, RouteResult, RouteStep } from '../../../services/route.service';
 
 // Declare google as a global variable for TypeScript
 declare const google: any;
@@ -297,7 +297,7 @@ export class SentComponent implements OnInit, AfterViewInit {
       routePath = this.routeService.decodePolyline(routeResult.polyline);
     } else {
       console.log('📍 Using route steps');
-      routePath = routeResult.steps.map(step => ({ lat: step.lat, lng: step.lng }));
+      routePath = routeResult.steps.map((step: RouteStep) => ({ lat: step.lat, lng: step.lng }));
     }
 
     console.log(`🛣️ Drawing route with ${routePath.length} points`);

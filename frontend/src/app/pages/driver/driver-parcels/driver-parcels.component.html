@@ -40,7 +40,7 @@
          [ngClass]="{'completed-parcel': isParcelCompleted(parcel)}"
          tabindex="0">
       <div class="card-header">
-        <h3>Parcel #{{ parcel.trackingId }}</h3>
+        <h3>Parcel   {{ parcel.trackingId }}</h3>
         <span class="status-badge"
               [ngClass]="{
                 'status-pending': parcel.status === 'PENDING',

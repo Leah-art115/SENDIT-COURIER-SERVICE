@@ -12,18 +12,21 @@ export interface Parcel {
   from: string;
   to: string;
   status: string;
-  description: string;
-  type: string;
-  weight: number;
-  mode: string;
-  price: number;
+  sentAt: string;
   pickedAt?: string;
   deliveredAt?: string;
   updatedAt: string;
-  driver?: {
-    currentLat: number;
-    currentLng: number;
-  };
+  price: number;
+  weight: number;
+  type: string;
+  mode: string;
+  description?: string;
+  fromLat?: number;
+  fromLng?: number;
+  currentLat?: number;
+  currentLng?: number;
+  destinationLat?: number;
+  destinationLng?: number;
 }
 
 export interface LocationUpdateResponse {

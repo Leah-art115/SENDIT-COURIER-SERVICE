@@ -90,6 +90,11 @@
       }
     }
   },
+  "schematics": {
+    "@schematics/angular:component": {
+      "style": "css"
+    }
+  },
   "cli": {
     "analytics": false
   }

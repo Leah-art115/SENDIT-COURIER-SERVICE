@@ -178,7 +178,7 @@ export class DriverParcelsComponent implements AfterViewInit, OnDestroy {
   }
 
   isParcelCompleted(parcel: Parcel): boolean {
-    return parcel.status === 'DELIVERED' || parcel.status === 'CANCELLED';
+    return parcel.status === 'DELIVERED' || parcel.status === 'COLLECTED_BY_RECEIVER' || parcel.status === 'CANCELLED';
   }
 
   markPickedUp(parcel: Parcel): void {

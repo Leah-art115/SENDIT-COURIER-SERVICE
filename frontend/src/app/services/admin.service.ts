@@ -141,24 +141,11 @@ export class AdminService {
     });
   }
 
-  // Fixed AdminService - just the getDashboardMetrics method
-getDashboardMetrics(): Observable<{
-  totalEarnings: number;
-  totalUsers: number;
-  parcelsInTransit: number;
-  parcelsDelivered: number;
-  recentParcels: {
-    trackingId: string;
-    senderName: string;
-    receiverName: string;
-    status: string;
-    updatedAt: string;
-  }[];
-}> {
-  // FIXED: Make initial call immediately, then poll every 5 seconds
-  return this.http.get<{
+  // FIXED: Admin Dashboard Metrics with totalDrivers support
+  getDashboardMetrics(): Observable<{
     totalEarnings: number;
     totalUsers: number;
+    totalDrivers: number; // Added totalDrivers
     parcelsInTransit: number;
     parcelsDelivered: number;
     recentParcels: {
@@ -168,29 +155,44 @@ getDashboardMetrics(): Observable<{
       status: string;
       updatedAt: string;
     }[];
-  }>(`${this.baseUrl}/parcels/dashboard/metrics`, {
-    headers: this.getAuthHeaders(),
-  });
-}
+  }> {
+    return this.http.get<{
+      totalEarnings: number;
+      totalUsers: number;
+      totalDrivers: number;
+      parcelsInTransit: number;
+      parcelsDelivered: number;
+      recentParcels: {
+        trackingId: string;
+        senderName: string;
+        receiverName: string;
+        status: string;
+        updatedAt: string;
+      }[];
+    }>(`${this.baseUrl}/parcels/dashboard/metrics`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
 
-// Add a separate method for polling if you want auto-refresh
-getDashboardMetricsWithPolling(): Observable<{
-  totalEarnings: number;
-  totalUsers: number;
-  parcelsInTransit: number;
-  parcelsDelivered: number;
-  recentParcels: {
-    trackingId: string;
-    senderName: string;
-    receiverName: string;
-    status: string;
-    updatedAt: string;
-  }[];
-}> {
-  return interval(5000).pipe(
-    switchMap(() => this.getDashboardMetrics())
-  );
-}
+  // Add a separate method for polling if you want auto-refresh
+  getDashboardMetricsWithPolling(): Observable<{
+    totalEarnings: number;
+    totalUsers: number;
+    totalDrivers: number;
+    parcelsInTransit: number;
+    parcelsDelivered: number;
+    recentParcels: {
+      trackingId: string;
+      senderName: string;
+      receiverName: string;
+      status: string;
+      updatedAt: string;
+    }[];
+  }> {
+    return interval(5000).pipe(
+      switchMap(() => this.getDashboardMetrics())
+    );
+  }
 
   resendEmails(parcelId: string, emailType: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/admin/emails/resend/${parcelId}`, 

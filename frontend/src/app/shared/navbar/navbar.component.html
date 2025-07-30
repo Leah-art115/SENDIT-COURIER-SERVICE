@@ -2,7 +2,7 @@
   <div class="navbar-container">
     <!-- Logo -->
     <div class="navbar-logo">
-      <a href="#" class="logo">SENDIT</a>
+      <a href="#" class="logo" (click)="navigateToHome()">SENDIT</a>
     </div>
 
     <!-- Navigation Items -->
@@ -14,26 +14,49 @@
       <a class="nav-item" (click)="scrollToSection('faqs')">FAQs</a>
     </div>
 
-    <!-- Auth Buttons OR User Info -->
+    <!-- Auth Buttons OR User Dropdown -->
     <div class="navbar-auth" [ngClass]="{'mobile-auth': isMenuOpen}">
-      <ng-container *ngIf="!authService.isAuthenticated(); else loggedInBlock">
+      <!-- Show auth buttons when not logged in AND on home page -->
+      <ng-container *ngIf="!authService.isAuthenticated() && isHomePage">
         <button class="auth-btn sign-in" (click)="showLoginForm()">Sign In</button>
         <button class="auth-btn sign-up" (click)="showRegisterForm()">Sign Up</button>
       </ng-container>
 
-      <ng-template #loggedInBlock>
-        <div class="user-info-wrapper">
-          <div class="user-info" (click)="goToDashboard()">
-            <i class="fas fa-user-astronaut user-icon"></i>
+      <!-- Show user dropdown when logged in AND on home page -->
+      <div class="user-dropdown-container" *ngIf="authService.isAuthenticated() && isHomePage">
+        <button class="user-dropdown-trigger" 
+                (click)="toggleDropdown($event)" 
+                [class.active]="isDropdownOpen">
+          <i class="fas fa-user-astronaut user-icon"></i>
+          <span class="user-name">{{ authService.getUserFirstName() || authService.getUserInitials() }}</span>
+          <i class="fas fa-chevron-down arrow-icon" [class.rotated]="isDropdownOpen"></i>
+        </button>
 
-            <span>{{ authService.getUserFirstName() || authService.getUserInitials() }}</span>
-          </div>
+        <div class="user-dropdown-menu" [class.show]="isDropdownOpen">
+          <button class="dropdown-option" (click)="navigateToDashboard($event)">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Go to Dashboard</span>
+          </button>
+          
+          <button class="dropdown-option" (click)="navigateToProfile($event)">
+            <i class="fas fa-user-cog"></i>
+            <span>My Profile</span>
+          </button>
+          
+          <div class="dropdown-divider"></div>
+          
+          <button class="dropdown-option logout-option" (click)="performLogout($event)">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+          </button>
         </div>
-      </ng-template>
+      </div>
     </div>
 
     <!-- Mobile Menu Toggle -->
-    <div class="mobile-toggle" [ngClass]="{'active': isMenuOpen}" (click)="toggleMenu()">
+    <div class="mobile-toggle" 
+         [ngClass]="{'active': isMenuOpen}" 
+         (click)="toggleMenu()">
       <span class="bar"></span>
       <span class="bar"></span>
       <span class="bar"></span>

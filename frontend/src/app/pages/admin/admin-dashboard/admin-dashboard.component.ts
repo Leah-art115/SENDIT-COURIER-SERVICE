@@ -8,6 +8,7 @@ import { NotificationService } from '../../../shared/notification/notification.s
 interface DashboardMetrics {
   totalEarnings: number;
   totalUsers: number;
+  totalDrivers: number; // Added totalDrivers
   parcelsInTransit: number;
   parcelsDelivered: number;
   recentParcels: {
@@ -47,9 +48,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       next: (metrics: DashboardMetrics) => {
         console.log('📊 Dashboard metrics received:', metrics);
         
+        // FIXED: Ensure proper number conversion and handle undefined values
         this.metrics = {
           totalEarnings: Number(metrics.totalEarnings) || 0,
           totalUsers: Number(metrics.totalUsers) || 0,
+          totalDrivers: Number(metrics.totalDrivers) || 0, // Added totalDrivers
           parcelsInTransit: Number(metrics.parcelsInTransit) || 0,
           parcelsDelivered: Number(metrics.parcelsDelivered) || 0,
           recentParcels: (metrics.recentParcels || []).map(parcel => ({
@@ -62,17 +65,18 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         };
         
         this.loading = false;
-        console.log('✅ Metrics processed:', this.metrics);
+        console.log('✅ Metrics processed successfully:', this.metrics);
       },
       error: (error: any) => {
         console.error('❌ Failed to load dashboard metrics:', error);
         this.loading = false;
-        this.notificationService.error('Failed to load dashboard metrics: ' + error.message);
+        this.notificationService.error('Failed to load dashboard metrics: ' + (error.message || 'Unknown error'));
         
         // Set default values to prevent template errors
         this.metrics = {
           totalEarnings: 0,
           totalUsers: 0,
+          totalDrivers: 0,
           parcelsInTransit: 0,
           parcelsDelivered: 0,
           recentParcels: []
@@ -82,7 +86,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   startPolling(): void {
-    // Poll every 30 seconds (instead of 5 seconds to reduce server load)
+    // Poll every 30 seconds (reduced from 5 seconds to reduce server load)
     this.subscription = timer(30000, 30000).pipe(
       switchMap(() => this.adminService.getDashboardMetrics())
     ).subscribe({
@@ -92,6 +96,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         this.metrics = {
           totalEarnings: Number(metrics.totalEarnings) || 0,
           totalUsers: Number(metrics.totalUsers) || 0,
+          totalDrivers: Number(metrics.totalDrivers) || 0,
           parcelsInTransit: Number(metrics.parcelsInTransit) || 0,
           parcelsDelivered: Number(metrics.parcelsDelivered) || 0,
           recentParcels: (metrics.recentParcels || []).map(parcel => ({

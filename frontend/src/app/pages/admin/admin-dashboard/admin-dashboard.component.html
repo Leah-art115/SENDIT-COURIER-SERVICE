@@ -3,24 +3,42 @@
 <div class="dashboard-cards">
   <div class="card">
     <h3>Total Earnings</h3>
-    <p>KES {{ metrics?.totalEarnings | number }}</p>
+    <p>KES {{ metrics?.totalEarnings | number:'1.2-2' }}</p>
   </div>
 
   <div class="card">
-    <h3>Total Users</h3>
-    <p>{{ metrics?.totalUsers }}</p>
+    <h3>Total Users</h3>  
+    <p>{{ metrics?.totalUsers | number }}</p>
   </div>
 
+  <!-- NEW: Added Total Drivers card -->
   <div class="card">
+    <h3>Total Drivers</h3>
+    <p>{{ metrics?.totalDrivers | number }}</p>
+  </div>
+
+  <!-- <div class="card">
     <h3>In Transit</h3>
-    <p>{{ metrics?.parcelsInTransit }}</p>
-  </div>
+    <p>{{ metrics?.parcelsInTransit | number }}</p>
+  </div> -->
 
   <div class="card">
     <h3>Delivered</h3>
-    <p>{{ metrics?.parcelsDelivered }}</p>
+    <p>{{ metrics?.parcelsDelivered | number }}</p>
   </div>
 </div>
+
+<!-- Add loading indicator -->
+<div *ngIf="loading" class="loading-indicator">
+  <p>Loading dashboard metrics...</p>
+</div>
+
+<!-- Add refresh button -->
+<!-- <div class="dashboard-actions">
+  <button (click)="refresh()" [disabled]="loading" class="refresh-btn">
+    {{ loading ? 'Loading...' : 'Refresh' }}
+  </button>
+</div> -->
 
 <h2>Recent Activity</h2>
 <div class="recent-table">
@@ -42,10 +60,17 @@
         <td class="col-status">
           <span [ngClass]="{
             'delivered': parcel.status === 'DELIVERED',
-            'transit': parcel.status === 'IN_TRANSIT'
+            'transit': parcel.status === 'IN_TRANSIT',
+            'picked-up': parcel.status === 'PICKED_UP_BY_DRIVER',
+            'assigned': parcel.status === 'ASSIGNED',
+            'pending': parcel.status === 'PENDING',
+            'collected': parcel.status === 'COLLECTED_BY_RECEIVER'
           }">{{ parcel.status || 'N/A' }}</span>
         </td>
-        <td class="col-date">{{ parcel.updatedAt | date: 'yyyy-MM-dd' }}</td>
+        <td class="col-date">{{ parcel.updatedAt | date: 'yyyy-MM-dd HH:mm' }}</td>
+      </tr>
+      <tr *ngIf="!metrics?.recentParcels?.length">
+        <td colspan="5" class="no-data">No recent parcels found</td>
       </tr>
     </tbody>
   </table>

@@ -484,18 +484,51 @@ export class ParcelService {
     return updatedParcel;
   }
 
+  // FIXED: Admin Dashboard Metrics with proper calculations
   async getDashboardMetrics() {
-    const [totalEarnings, totalUsers, parcelsInTransit, parcelsDelivered, recentParcels] = await Promise.all([
+    const [
+      totalEarningsResult, 
+      totalUsers, 
+      totalDrivers,
+      parcelsInTransit, 
+      parcelsDelivered, 
+      recentParcels
+    ] = await Promise.all([
+      // Calculate total earnings from ALL parcels that have been processed (not just delivered)
       this.prisma.parcel.aggregate({
-        where: { status: ParcelStatus.DELIVERED },
+        where: {
+          status: {
+            in: [
+              ParcelStatus.ASSIGNED,
+              ParcelStatus.PICKED_UP_BY_DRIVER,
+              ParcelStatus.IN_TRANSIT,
+              ParcelStatus.DELIVERED,
+              ParcelStatus.COLLECTED_BY_RECEIVER
+            ]
+          }
+        },
         _sum: { price: true },
       }),
       this.authService.getTotalUsers(),
-      this.prisma.parcel.count({
-        where: { status: ParcelStatus.IN_TRANSIT },
+      // Add total drivers count
+      this.prisma.driver.count({
+        where: {
+          deletedAt: null // Only count active drivers
+        }
       }),
       this.prisma.parcel.count({
-        where: { status: ParcelStatus.DELIVERED },
+        where: { 
+          status: { 
+            in: [ParcelStatus.IN_TRANSIT, ParcelStatus.PICKED_UP_BY_DRIVER] 
+          } 
+        },
+      }),
+      this.prisma.parcel.count({
+        where: { 
+          status: { 
+            in: [ParcelStatus.DELIVERED, ParcelStatus.COLLECTED_BY_RECEIVER] 
+          } 
+        },
       }),
       this.prisma.parcel.findMany({
         take: 5,
@@ -511,19 +544,12 @@ export class ParcelService {
       }),
     ]);
 
-    console.log('Dashboard metrics:', {
-      totalEarnings: totalEarnings._sum.price,
-      totalUsers,
-      parcelsInTransit,
-      parcelsDelivered,
-      recentParcels: recentParcels.map(p => ({ trackingId: p.trackingId, price: p.price, status: p.status })),
-    });
-
-    return {
-      totalEarnings: totalEarnings._sum.price ?? 0,
-      totalUsers,
-      parcelsInTransit,
-      parcelsDelivered,
+    const result = {
+      totalEarnings: Number(totalEarningsResult._sum.price) || 0,
+      totalUsers: Number(totalUsers) || 0,
+      totalDrivers: Number(totalDrivers) || 0,
+      parcelsInTransit: Number(parcelsInTransit) || 0,
+      parcelsDelivered: Number(parcelsDelivered) || 0,
       recentParcels: recentParcels.map(parcel => ({
         trackingId: parcel.trackingId,
         senderName: parcel.senderName,
@@ -532,6 +558,19 @@ export class ParcelService {
         updatedAt: parcel.updatedAt.toISOString(),
       })),
     };
+
+    console.log('📊 Dashboard metrics calculated:', {
+      totalEarnings: result.totalEarnings,
+      totalUsers: result.totalUsers,
+      totalDrivers: result.totalDrivers,
+      parcelsInTransit: result.parcelsInTransit,
+      parcelsDelivered: result.parcelsDelivered,
+      recentParcelsCount: result.recentParcels.length,
+      // Debug: Log some sample prices to verify calculation
+      samplePrices: recentParcels.map(p => ({ id: p.trackingId, price: p.price })),
+    });
+
+    return result;
   }
 
   async sendManualDeliveryNotification(parcelId: string): Promise<void> {

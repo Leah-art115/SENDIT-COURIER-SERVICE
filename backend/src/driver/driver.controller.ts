@@ -44,4 +44,11 @@ export class DriverController {
     const driverId = req.user.sub;
     return this.driverService.markParcelPickedUp(driverId, parcelId);
   }
+
+  @Get('dashboard/metrics')
+  async getDriverDashboardMetrics(@Req() req: any) {
+    const driverId = req.user?.id || req.user?.sub;
+    console.log('🚛 Getting driver dashboard metrics for:', driverId);
+    return this.driverService.getDriverDashboardMetrics(driverId);
+  }
 }

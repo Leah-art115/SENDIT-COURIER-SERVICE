@@ -44,11 +44,17 @@ export interface DriverProfile {
   createdAt?: string;
 }
 
-export interface DriverProfile {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
+// NEW: Driver Dashboard Metrics Interface
+export interface DriverDashboardMetrics {
+  totalDeliveries: number;
+  inTransit: number;
+  completed: number;
+  recentDeliveries: {
+    trackingId: string;
+    recipient: string;
+    status: string;
+    date: string;
+  }[];
 }
 
 @Injectable({
@@ -78,6 +84,18 @@ export class DriverService {
     );
   }
 
+  // NEW: Get driver dashboard metrics
+  getDriverDashboardMetrics(): Observable<DriverDashboardMetrics> {
+    return this.http.get<DriverDashboardMetrics>(`${this.baseUrl}/driver/dashboard/metrics`, {
+      headers: this.getAuthHeaders(),
+    }).pipe(
+      catchError(error => {
+        console.error('Error fetching driver dashboard metrics:', error);
+        return throwError(() => new Error(error.message || 'Failed to fetch dashboard metrics'));
+      })
+    );
+  }
+
   markPickedUp(parcelId: string) {
     return this.http.patch(`${this.baseUrl}/driver/mark-picked-up/${parcelId}`, {}, {
       headers: this.getAuthHeaders(),
@@ -85,6 +103,7 @@ export class DriverService {
   }
 
   getMyParcels(): Observable<Parcel[]> {
+    // FIXED: Use the new dedicated endpoint for driver parcels
     return this.http.get<Parcel[]>(`${this.baseUrl}/driver/my-parcels`, {
       headers: this.getAuthHeaders(),
     }).pipe(

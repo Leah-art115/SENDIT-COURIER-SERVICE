@@ -224,19 +224,6 @@ export class DriverService {
     }
   }
 
-  async getMyParcels(driverId: number) {
-    try {
-      return await this.prisma.parcel.findMany({
-        where: { driverId },
-        orderBy: { sentAt: 'desc' },
-        include: { driver: { select: { currentLat: true, currentLng: true } } },
-      });
-    } catch (error) {
-      console.error('Error fetching driver parcels:', error);
-      throw new BadRequestException('Failed to fetch parcels');
-    }
-  }
-
   async getAllDrivers() {
     try {
       return await this.prisma.driver.findMany({
@@ -409,5 +396,112 @@ export class DriverService {
     return this.prisma.driver.delete({
       where: { id: driverId },
     });
+  }
+
+  async getDriverDashboardMetrics(driverId: number) {
+    const [
+      assignedParcels,
+      totalDeliveries,
+      inTransitParcels,
+      completedParcels,
+    ] = await Promise.all([
+      // All parcels assigned to this driver
+      this.prisma.parcel.findMany({
+        where: { driverId },
+        orderBy: { updatedAt: 'desc' },
+        include: {
+          statusHistory: true,
+        },
+      }),
+      // Total delivered by this driver
+      this.prisma.parcel.count({
+        where: {
+          driverId,
+          status: ParcelStatus.DELIVERED,
+        },
+      }),
+      // Currently in transit (picked up + in transit)
+      this.prisma.parcel.count({
+        where: {
+          driverId,
+          status: {
+            in: [ParcelStatus.IN_TRANSIT, ParcelStatus.PICKED_UP_BY_DRIVER],
+          },
+        },
+      }),
+      // Completed (delivered + collected)
+      this.prisma.parcel.count({
+        where: {
+          driverId,
+          status: {
+            in: [ParcelStatus.DELIVERED, ParcelStatus.COLLECTED_BY_RECEIVER],
+          },
+        },
+      }),
+    ]);
+
+    const recentDeliveries = assignedParcels.slice(0, 5).map((parcel) => ({
+      trackingId: parcel.trackingId,
+      recipient: parcel.receiverName,
+      status: parcel.status,
+      date: parcel.updatedAt.toISOString(),
+    }));
+
+    const result = {
+      totalDeliveries: Number(totalDeliveries) || 0,
+      inTransit: Number(inTransitParcels) || 0,
+      completed: Number(completedParcels) || 0,
+      recentDeliveries,
+    };
+
+    console.log('🚛 Driver dashboard metrics:', {
+      driverId,
+      ...result,
+    });
+
+    return result;
+  }
+
+  // Single getMyParcels method - removed duplicate
+  async getMyParcels(driverId: number) {
+    try {
+      const parcels = await this.prisma.parcel.findMany({
+        where: { driverId },
+        orderBy: { updatedAt: 'desc' },
+        include: {
+          statusHistory: true,
+          driver: { select: { currentLat: true, currentLng: true } },
+        },
+      });
+
+      return parcels.map((parcel) => ({
+        id: parcel.id,
+        trackingId: parcel.trackingId,
+        receiverName: parcel.receiverName,
+        senderName: parcel.senderName,
+        from: parcel.from,
+        to: parcel.to,
+        status: parcel.status,
+        sentAt: parcel.sentAt?.toISOString(),
+        pickedAt: parcel.pickedAt?.toISOString(),
+        deliveredAt: parcel.deliveredAt?.toISOString(),
+        updatedAt: parcel.updatedAt.toISOString(),
+        price: parcel.price,
+        weight: parcel.weight,
+        type: parcel.type,
+        mode: parcel.mode,
+        description: parcel.description,
+        fromLat: parcel.fromLat,
+        fromLng: parcel.fromLng,
+        // Use driver's current location instead of parcel's currentLat/currentLng
+        currentLat: parcel.driver?.currentLat,
+        currentLng: parcel.driver?.currentLng,
+        destinationLat: parcel.destinationLat,
+        destinationLng: parcel.destinationLng,
+      }));
+    } catch (error) {
+      console.error('Error fetching driver parcels:', error);
+      throw new BadRequestException('Failed to fetch parcels');
+    }
   }
 }

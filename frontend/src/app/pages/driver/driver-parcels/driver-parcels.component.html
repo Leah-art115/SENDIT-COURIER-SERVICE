@@ -34,6 +34,17 @@
     <input type="date" [(ngModel)]="filterToDate" (ngModelChange)="filteredParcels" />
   </div>
 
+  <!-- Empty State Message -->
+<div class="empty-state" *ngIf="filteredParcels.length === 0">
+  <div class="empty-state-content">
+    <div class="empty-icon">
+      📦
+    </div>
+    <h2>No Packages Yet</h2>
+    <p>You don't have any packages at the moment. Your packages will appear here once they're available.</p>
+  </div>
+</div>
+
   <div class="parcel-cards">
     <div *ngFor="let parcel of filteredParcels"
          class="card"

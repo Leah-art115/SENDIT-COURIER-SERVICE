@@ -43,3 +43,64 @@
 .nav-right button:hover {
   color: var(--primary-hover);
 }
+
+/* Tablet view (max-width: 768px) */
+@media (max-width: 768px) {
+  .user-navbar,
+  .driver-navbar,
+  .admin-navbar {
+    padding: 10px 15px;
+    flex-wrap: wrap; /* Allow wrapping to prevent overflow */
+  }
+
+  .nav-left {
+    font-size: 1.2rem; /* Smaller logo text */
+  }
+
+  .nav-right {
+    gap: 1rem; /* Reduce gap between items */
+  }
+
+  .nav-right a,
+  .nav-right button {
+    font-size: 0.9rem; /* Smaller font size */
+  }
+
+  .nav-right i {
+    font-size: 1rem; /* Smaller icon size */
+  }
+}
+
+/* Mobile view (max-width: 480px) */
+@media (max-width: 480px) {
+  .user-navbar,
+  .driver-navbar,
+  .admin-navbar {
+    flex-direction: column; /* Stack vertically */
+    align-items: flex-start;
+    padding: 8px 10px;
+  }
+
+  .nav-left {
+    font-size: 1rem;
+    margin-bottom: 10px; /* Space below logo */
+  }
+
+  .nav-right {
+    flex-direction: column; /* Stack links vertically */
+    gap: 0.8rem;
+    width: 100%; /* Full width for alignment */
+  }
+
+  .nav-right a,
+  .nav-right button {
+    font-size: 0.85rem;
+    width: 100%; /* Full width for touch targets */
+    text-align: left; /* Align text for better readability */
+    padding: 5px 0; /* Add padding for touch */
+  }
+
+  .nav-right i {
+    font-size: 0.9rem;
+  }
+}

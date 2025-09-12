@@ -22,10 +22,6 @@
             <span style="font-weight: bold; color: #000000; min-width: 140px; display: inline-block;">Pickup Location:</span>
             <span style="color: #000000;"><%= pickupLocation %></span>
         </div>
-        <div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(128, 0, 32, 0.3);">
-            <span style="font-weight: bold; color: #000000; min-width: 140px; display: inline-block;">Arrival Time:</span>
-            <span style="color: #000000;"><%= arrivalTime %></span>
-        </div>
         <% if (pickupInstructions) { %>
             <div>
                 <span style="font-weight: bold; color: #000000; min-width: 140px; display: inline-block;">Instructions:</span>
@@ -38,9 +34,6 @@
         <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #c44569;">
             <h3 style="margin: 0 0 10px 0; color: #800020; font-size: 18px;">🚚 Your Driver</h3>
             <p style="color: #000000; font-size: 16px; line-height: 1.5; margin: 0 0 10px 0;"><strong>Driver:</strong> <%= driverName %></p>
-            <% if (driverPhone) { %>
-                <p style="color: #000000; font-size: 16px; line-height: 1.5; margin: 0;"><strong>Contact:</strong> <a href="tel:<%= driverPhone %>" style="color: #c44569;"><%= driverPhone %></a></p>
-            <% } %>
         </div>
     <% } %>
 

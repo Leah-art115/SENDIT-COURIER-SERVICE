@@ -350,9 +350,9 @@ export class ParcelService {
         },
       });
 
-      console.log(`✅ Parcel ${parcelId} status updated to ${newStatus}`);
+      console.log(`Parcel ${parcelId} status updated to ${newStatus}`);
       if (driverUpdates.length > 0 && parcel.driverId) {
-        console.log(`✅ Driver ${parcel.driverId} status updated to AVAILABLE`);
+        console.log(`Driver ${parcel.driverId} status updated to AVAILABLE`);
       }
 
       return updatedParcel;
@@ -417,14 +417,14 @@ export class ParcelService {
           }
         );
 
-        console.log(`✅ Assignment email sent to driver ${driver.name} for parcel ${parcel.trackingId}`);
+        console.log(`Assignment email sent to driver ${driver.name} for parcel ${parcel.trackingId}`);
       } catch (emailError) {
-        console.error('❌ Failed to send assignment email to driver:', emailError);
+        console.error('Failed to send assignment email to driver:', emailError);
       }
 
       return updatedParcel;
     } catch (error) {
-      console.error('❌ Error assigning driver:', error);
+      console.error('Error assigning driver:', error);
       throw error;
     }
   }
@@ -479,7 +479,7 @@ export class ParcelService {
       },
     });
 
-    console.log(`✅ Driver ${parcel.driverId} status updated to AVAILABLE after unassignment`);
+    console.log(`Driver ${parcel.driverId} status updated to AVAILABLE after unassignment`);
 
     return updatedParcel;
   }
@@ -559,16 +559,16 @@ export class ParcelService {
       })),
     };
 
-    console.log('📊 Dashboard metrics calculated:', {
-      totalEarnings: result.totalEarnings,
-      totalUsers: result.totalUsers,
-      totalDrivers: result.totalDrivers,
-      parcelsInTransit: result.parcelsInTransit,
-      parcelsDelivered: result.parcelsDelivered,
-      recentParcelsCount: result.recentParcels.length,
-      // Debug: Log some sample prices to verify calculation
-      samplePrices: recentParcels.map(p => ({ id: p.trackingId, price: p.price })),
-    });
+    // console.log('Dashboard metrics calculated:', {
+    //   totalEarnings: result.totalEarnings,
+    //   totalUsers: result.totalUsers,
+    //   totalDrivers: result.totalDrivers,
+    //   parcelsInTransit: result.parcelsInTransit,
+    //   parcelsDelivered: result.parcelsDelivered,
+    //   recentParcelsCount: result.recentParcels.length,
+    
+    //   samplePrices: recentParcels.map(p => ({ id: p.trackingId, price: p.price })),
+    // });
 
     return result;
   }
@@ -590,9 +590,9 @@ export class ParcelService {
         parcel.to,
         parcel.deliveredAt?.toLocaleString()
       );
-      console.log(`✅ Sent delivery notification for parcel ${parcelId} to ${parcel.receiverEmail}`);
+      console.log(`Sent delivery notification for parcel ${parcelId} to ${parcel.receiverEmail}`);
     } catch (error) {
-      console.error(`❌ Failed to send delivery notification for parcel ${parcelId}:`, error);
+      console.error(`Failed to send delivery notification for parcel ${parcelId}:`, error);
       throw new InternalServerErrorException('Failed to send delivery notification');
     }
   }
@@ -614,9 +614,9 @@ export class ParcelService {
         location,
         message
       );
-      console.log(`✅ Sent location notification for parcel ${parcelId} to ${parcel.receiverEmail}`);
+      console.log(`Sent location notification for parcel ${parcelId} to ${parcel.receiverEmail}`);
     } catch (error) {
-      console.error(`❌ Failed to send location notification for parcel ${parcelId}:`, error);
+      console.error(`Failed to send location notification for parcel ${parcelId}:`, error);
       throw new InternalServerErrorException('Failed to send location notification');
     }
   }

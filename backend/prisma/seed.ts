@@ -17,7 +17,7 @@ async function main() {
     },
   });
 
-  console.log('✅ Admin user created');
+  console.log('Admin Created');
 }
 
 main()

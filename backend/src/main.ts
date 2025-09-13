@@ -9,9 +9,12 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // CORS configuration for production
+  // CORS configuration for both development and production
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:4200',
+    origin: [
+      'http://localhost:4200',  // Local development
+      'https://sendit-courier-service.vercel.app'  // Production
+    ],
     credentials: true,
   });
 

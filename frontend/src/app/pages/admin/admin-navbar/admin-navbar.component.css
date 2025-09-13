@@ -6,11 +6,25 @@
   background-color: var(--primary-color);
   color: var(--text-light);
   box-shadow: 0 2px 6px var(--shadow-strong);
+  position: relative;
 }
 
 .admin-navbar .nav-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
   font-weight: bold;
   font-size: 1rem;
+}
+
+.hamburger-menu {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 20px;
+  padding: 5px;
 }
 
 .admin-navbar .nav-right {
@@ -67,34 +81,58 @@
 
 /* Mobile view (max-width: 480px) */
 @media (max-width: 480px) {
-  .user-navbar,
-  .driver-navbar,
   .admin-navbar {
-    flex-direction: column; /* Stack vertically */
-    align-items: flex-start;
+    flex-wrap: wrap;
     padding: 8px 10px;
+  }
+
+  .hamburger-menu {
+    display: block;
   }
 
   .nav-left {
     font-size: 1rem;
-    margin-bottom: 10px; /* Space below logo */
   }
 
   .nav-right {
-    flex-direction: column; /* Stack links vertically */
-    gap: 0.8rem;
-    width: 100%; /* Full width for alignment */
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: var(--primary-color);
+    flex-direction: column;
+    gap: 0;
+    box-shadow: 0 2px 6px var(--shadow-strong);
+    display: none;
+    z-index: 1000;
+  }
+
+  .nav-right.mobile-menu-open {
+    display: flex;
   }
 
   .nav-right a,
   .nav-right button {
     font-size: 0.85rem;
-    width: 100%; /* Full width for touch targets */
-    text-align: left; /* Align text for better readability */
-    padding: 5px 0; /* Add padding for touch */
+    width: 100%;
+    text-align: left;
+    padding: 12px 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .nav-right a:hover,
+  .nav-right button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .nav-right button {
+    border: none;
+    background: transparent;
+    color: var(--text-light);
   }
 
   .nav-right i {
     font-size: 0.9rem;
+    margin-right: 8px;
   }
 }

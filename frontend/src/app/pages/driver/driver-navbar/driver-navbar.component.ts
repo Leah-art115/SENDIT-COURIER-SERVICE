@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-driver-navbar',
@@ -10,8 +11,16 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./driver-navbar.component.css']
 })
 export class DriverNavbarComponent {
+  isMobileMenuOpen = false;
+
+  constructor(private router: Router, private authService: AuthService) {}
+
+  toggleMobileMenu() {
+    this.isMobileMenuOpen = !this.isMobileMenuOpen;
+  }
+
   logout() {
-    localStorage.clear();
-    location.reload();
+    this.authService.logout(); 
+    this.router.navigate(['/auth/login']);
   }
 }

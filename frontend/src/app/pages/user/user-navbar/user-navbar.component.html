@@ -1,8 +1,12 @@
 <nav class="user-navbar">
   <div class="nav-left">
+    <button class="hamburger-menu" (click)="toggleMobileMenu()">
+      <i class="fas fa-bars"></i>
+    </button>
+    <strong>SendIT User</strong>
   </div>
 
-  <div class="nav-right">
+  <div class="nav-right" [class.mobile-menu-open]="isMobileMenuOpen">
     <a routerLink="/user/dashboard" routerLinkActive="active">Dashboard</a>
     <a routerLink="/user/sent" routerLinkActive="active">Sent Parcels</a>
     <a routerLink="/user/received" routerLinkActive="active">Received Parcels</a>

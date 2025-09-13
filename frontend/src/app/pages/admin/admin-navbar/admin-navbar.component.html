@@ -1,9 +1,12 @@
 <nav class="admin-navbar">
   <div class="nav-left">
+    <button class="hamburger-menu" (click)="toggleMobileMenu()">
+      <i class="fas fa-bars"></i>
+    </button>
     <strong>SendIT Admin</strong>
   </div>
 
-  <div class="nav-right">
+  <div class="nav-right" [class.mobile-menu-open]="isMobileMenuOpen">
     <a routerLink="/admin/dashboard" routerLinkActive="active">Dashboard</a>
     <a routerLink="/admin/create-parcel" routerLinkActive="active">Create Parcel</a>
     <a routerLink="/admin/parcels" routerLinkActive="active">Parcels</a>

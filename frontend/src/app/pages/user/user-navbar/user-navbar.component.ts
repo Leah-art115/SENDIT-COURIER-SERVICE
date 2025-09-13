@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../../../services/auth.service'; // ✅ Make sure this path is correct
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-user-navbar',
@@ -11,10 +11,16 @@ import { AuthService } from '../../../services/auth.service'; // ✅ Make sure t
   styleUrls: ['./user-navbar.component.css']
 })
 export class UserNavbarComponent {
+  isMobileMenuOpen = false;
+
   constructor(private router: Router, private authService: AuthService) {}
 
+  toggleMobileMenu() {
+    this.isMobileMenuOpen = !this.isMobileMenuOpen;
+  }
+
   logout() {
-    this.authService.logout(); // ✅ Perform actual logout
-    this.router.navigate(['/auth/login']); // ✅ Redirect to login
+    this.authService.logout(); 
+    this.router.navigate(['/auth/login']); 
   }
 }

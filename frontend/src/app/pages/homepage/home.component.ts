@@ -93,93 +93,127 @@ export class HomepageComponent implements OnInit, AfterViewInit {
   }
 
   trackPackage(): void {
-    if (!this.trackingId.trim()) {
-      this.notify.warning('Please enter a tracking ID.');
-      return;
-    }
-
-    this.isLoading = true;
-    
-    console.log('Tracking ID:', this.trackingId.trim());
-
-    // Use your existing ParcelService
-    this.parcelService.getParcelByTrackingId(this.trackingId.trim())
-      .pipe(
-        map(parcel => {
-          console.log('Received parcel data:', parcel);
-          
-          const result: TrackingResult = {
-            trackingId: parcel.trackingId,
-            receiver: parcel.receiverName,
-            from: parcel.from,
-            to: parcel.to,
-            dateSent: new Date(parcel.updatedAt).toISOString().split('T')[0],
-            status: this.formatStatus(parcel.status),
-            description: parcel.description || 'No description available',
-            type: this.formatType(parcel.type),
-            weight: `${parcel.weight || 0} kg`,
-            paymentMethod: 'Not specified', // Add if available in your parcel model
-            deliveryMode: parcel.mode || 'STANDARD',
-            expectedDelivery: parcel.deliveredAt
-              ? new Date(parcel.deliveredAt).toISOString().split('T')[0]
-              : this.calculateExpectedDelivery(parcel.updatedAt, parcel.mode),
-            pickupLocation: this.getPickupLocation(parcel),
-            currentLocation: this.getCurrentLocation(parcel),
-            destinationLocation: this.getDestinationLocation(parcel),
-            timeline: this.createTimeline(parcel)
-          };
-          
-          console.log('Final tracking result:', result);
-          return result;
-        }),
-        catchError((err: any) => {
-          this.isLoading = false;
-          console.error('Tracking error:', err);
-          
-          let errorMessage = `Package with tracking ID "${this.trackingId}" not found. Please verify the tracking number.`;
-          
-          if (err.message?.includes('not found') || err.message?.includes('404')) {
-            errorMessage = `Package with tracking ID "${this.trackingId}" not found. Please verify the tracking number.`;
-          } else if (err.message?.includes('401') || err.message?.includes('Unauthorized')) {
-            errorMessage = 'Authentication required. Please log in to track packages.';
-          } else if (err.message?.includes('network') || err.message?.includes('connection')) {
-            errorMessage = 'Unable to connect to server. Please check your internet connection.';
-          } else if (err.message) {
-            errorMessage = err.message;
-          }
-          
-          this.notify.error(errorMessage);
-          return throwError(() => err);
-        })
-      )
-      .subscribe({
-        next: (result) => {
-          this.isLoading = false;
-          this.trackingResult = result;
-          this.showTrackingModal = true;
-          
-          // Initialize map after modal is shown
-          setTimeout(() => {
-            if (this.mapInitialized && this.trackingResult) {
-              this.renderGoogleMapWithRoute(this.trackingResult);
-            } else {
-              console.warn('Map not initialized yet, retrying...');
-              setTimeout(() => {
-                if (this.mapInitialized && this.trackingResult) {
-                  this.renderGoogleMapWithRoute(this.trackingResult);
-                }
-              }, 1000);
-            }
-          }, 300);
-
-          this.notify.success(`Package found: ${result.trackingId}`);
-        },
-        error: (err) => {
-          this.isLoading = false;
-          console.error('Final tracking error:', err);
-        }
-      });
+  if (!this.trackingId.trim()) {
+    this.notify.warning('Please enter a tracking ID.');
+    return;
   }
+
+  this.isLoading = true;
+  
+  console.log('Tracking ID:', this.trackingId.trim());
+
+  // Use your existing ParcelService
+  this.parcelService.getParcelByTrackingId(this.trackingId.trim())
+    .pipe(
+      map(parcel => {
+        console.log('Received parcel data:', parcel);
+        
+        const result: TrackingResult = {
+          trackingId: parcel.trackingId,
+          receiver: parcel.receiverName,
+          from: parcel.from,
+          to: parcel.to,
+          dateSent: new Date(parcel.updatedAt).toISOString().split('T')[0],
+          status: this.formatStatus(parcel.status),
+          description: parcel.description || 'No description available',
+          type: this.formatType(parcel.type),
+          weight: `${parcel.weight || 0} kg`,
+          paymentMethod: 'Not specified', // Add if available in your parcel model
+          deliveryMode: parcel.mode || 'STANDARD',
+          expectedDelivery: parcel.deliveredAt
+            ? new Date(parcel.deliveredAt).toISOString().split('T')[0]
+            : this.calculateExpectedDelivery(parcel.updatedAt, parcel.mode),
+          pickupLocation: this.getPickupLocation(parcel),
+          currentLocation: this.getCurrentLocation(parcel),
+          destinationLocation: this.getDestinationLocation(parcel),
+          timeline: this.createTimeline(parcel)
+        };
+        
+        console.log('Final tracking result:', result);
+        return result;
+      }),
+      catchError((err: any) => {
+        this.isLoading = false;
+        console.error('Tracking error:', err);
+        
+        // Enhanced user-friendly error messages
+        let errorMessage = '';
+        
+        // Check for specific error conditions
+        if (err.status === 404 || err.error?.message?.toLowerCase().includes('not found') || 
+            err.message?.toLowerCase().includes('not found') || err.message?.toLowerCase().includes('404')) {
+          errorMessage = `Sorry, we couldn't find a package with tracking ID "${this.trackingId.trim()}". Please double-check your tracking number and try again.`;
+        } 
+        else if (err.status === 401 || err.error?.message?.toLowerCase().includes('unauthorized') || 
+                 err.message?.toLowerCase().includes('401') || err.message?.toLowerCase().includes('unauthorized')) {
+          errorMessage = 'Authentication required. Please log in to track your packages.';
+        } 
+        else if (err.status === 403 || err.error?.message?.toLowerCase().includes('forbidden')) {
+          errorMessage = 'You don\'t have permission to access this package information.';
+        }
+        else if (err.status === 500 || err.error?.message?.toLowerCase().includes('server error') || 
+                 err.message?.toLowerCase().includes('500')) {
+          errorMessage = 'Our servers are currently experiencing issues. Please try again in a few moments.';
+        }
+        else if (err.status === 0 || err.name === 'HttpErrorResponse' || 
+                 err.message?.toLowerCase().includes('network') || 
+                 err.message?.toLowerCase().includes('connection') ||
+                 err.message?.toLowerCase().includes('timeout')) {
+          errorMessage = 'Unable to connect to our servers. Please check your internet connection and try again.';
+        }
+        else if (err.error?.message) {
+          // If there's a specific error message from the server, make it user-friendly
+          const serverMessage = err.error.message.toLowerCase();
+          if (serverMessage.includes('invalid') && serverMessage.includes('tracking')) {
+            errorMessage = `The tracking ID "${this.trackingId.trim()}" appears to be invalid. Please check the format and try again.`;
+          } else if (serverMessage.includes('expired')) {
+            errorMessage = 'This tracking information has expired or is no longer available.';
+          } else {
+            errorMessage = `We encountered an issue while searching for your package. Please try again or contact support if the problem persists.`;
+          }
+        }
+        else if (err.message) {
+          // Handle any other error messages
+          errorMessage = `We're having trouble finding your package right now. Please try again in a moment.`;
+        }
+        else {
+          // Generic fallback message
+          errorMessage = `Unable to track package with ID "${this.trackingId.trim()}". Please verify your tracking number or contact customer support for assistance.`;
+        }
+        
+        this.notify.error(errorMessage);
+        return throwError(() => err);
+      })
+    )
+    .subscribe({
+      next: (result) => {
+        this.isLoading = false;
+        this.trackingResult = result;
+        this.showTrackingModal = true;
+        
+        // Initialize map after modal is shown
+        setTimeout(() => {
+          if (this.mapInitialized && this.trackingResult) {
+            this.renderGoogleMapWithRoute(this.trackingResult);
+          } else {
+            console.warn('Map not initialized yet, retrying...');
+            setTimeout(() => {
+              if (this.mapInitialized && this.trackingResult) {
+                this.renderGoogleMapWithRoute(this.trackingResult);
+              }
+            }, 1000);
+          }
+        }, 300);
+
+        this.notify.success(`Package found: ${result.trackingId}`);
+      },
+      error: (err) => {
+        this.isLoading = false;
+        console.error('Final tracking error:', err);
+        // Error message already handled in catchError above
+      }
+    });
+}
 
   private getPickupLocation(parcel: any): { lat: number; lng: number } {
     // Try to get coordinates from parcel data, fallback to city lookup
